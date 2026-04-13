@@ -1,0 +1,18 @@
+[
+  {
+    "Id": "1",
+    "Platform": "Threads",
+    "Author": "TechExplorer",
+    "Content": "今天測試了 Blazor WASM 的效能，真的讓人驚艷！",
+    "CapturedAt": "2026-04-13T10:00:00",
+    "Url": "https://www.threads.net/..."
+  },
+  {
+    "Id": "2",
+    "Platform": "PTT",
+    "Author": "SoftJobWatcher",
+    "Content": "[轉錄] 2026 軟體工程師薪資調查報告",
+    "CapturedAt": "2026-04-13T09:30:00",
+    "Url": "https://www.ptt.cc/..."
+  }
+]

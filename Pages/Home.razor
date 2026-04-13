@@ -1,14 +1,24 @@
 ﻿@page "/"
+@using System.Net.Http.Json
+@inject HttpClient Http
 
 <MudContainer MaxWidth="MaxWidth.Medium" Class="mt-8">
-    @if (Posts == null || !Posts.Any())
+    @if (_isLoading)
+    {
+        <MudSkeleton SkeletonType="SkeletonType.Rectangle"
+                     Height="200px"
+                     Class="mb-4" />
+        <MudSkeleton SkeletonType="SkeletonType.Rectangle"
+                     Height="200px" />
+    }
+    else if (_posts == null || !_posts.Any())
     {
         <MudAlert Severity="Severity.Info">目前尚無抓取資料...</MudAlert>
     }
     else
     {
         <MudGrid>
-            @foreach (var post in Posts)
+            @foreach (var post in _posts)
             {
                 <MudItem xs="12">
                     <MudCard Elevation="2"
@@ -64,20 +74,29 @@
 </MudContainer>
 
 @code {
-    private List<SocialPost> Posts = new();
+    private List<SocialPost>? _posts = new();
+    private bool _isLoading = false;
 
     protected override async Task OnInitializedAsync()
     {
-        Posts.Add(new SocialPost {
-            Author = "UserA",
-            Content = "這是一個關於 WASM 的討論...",
-            Url = "https://...",
-            Tags = ["趨勢追蹤", "科技"]
-        });
+        try
+        {
+            _isLoading = true;
+            _posts = await Http.GetFromJsonAsync<List<SocialPost>>(
+                "data.json");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"讀取失敗： {ex.Message}");
+        }
+        finally
+        {
+            _isLoading = false;
+        }
     }
 
     private async Task SaveToIndexedDb(SocialPost post)
     {
-        // 這裡實作你之前想做的：存入 IndexedDB 的邏輯
+        
     }
 }
