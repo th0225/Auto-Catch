@@ -1,3 +1,86 @@
 ﻿@inherits LayoutComponentBase
 
-@Body
+<MudThemeProvider Theme="CustomTheme" @bind-IsDarkMode="@_isDarkMode" />
+<MudPopoverProvider />
+
+<MudLayout>
+    <MudAppBar Elevation="0" Class="main-appbar">
+        <MudText Typo="Typo.h6" Class="ml-3 appbar-title">
+            Auto Catch
+        </MudText>
+        <MudSpacer />
+        <MudIconButton Icon="@(_isDarkMode ? Icons.Material.Filled.LightMode : Icons.Material.Filled.DarkMode)" 
+                       Color="Color.Primary" 
+                       OnClick="@((e) => _isDarkMode = !_isDarkMode)" />
+    </MudAppBar>
+    
+    <MudDrawer @bind-Open="_drawerOpen" Elevation="1">
+        <MudText Typo="Typo.h5" Class="mt-1">Application</MudText>
+    </MudDrawer>
+
+    <MudMainContent>
+        @Body
+    </MudMainContent>
+</MudLayout>
+
+<style>
+    .main-appbar.mud-appbar {
+        background-color: var(--mud-palette-appbar-background) !important;
+        backdrop-filter: blur(20px) saturate(180%) !important;
+        -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+        border-bottom: 0.5px solid rgba(166, 137, 102, 0.15) !important;
+        color: var(--mud-palette-text-primary) !important; 
+    }
+
+    .appbar-title {
+        color: var(--mud-palette-text-primary) !important;
+        font-weight: 800 !important;
+    }
+</style>
+
+@code {
+    bool _drawerOpen = true;
+    bool _isDarkMode = false;
+
+    private MudTheme CustomTheme = new MudTheme()
+    {
+        PaletteLight = new PaletteLight()
+        {
+            Primary = "#A68966",
+            Secondary = "#F0E5D1",
+            Background = "#FFFDF9",
+            AppbarBackground = "#FFFDF9",
+            Surface = "#FFFFFF",
+            TextPrimary = "#5F4B32",
+            TextSecondary = "#8D7B68",
+            ActionDefault = "#E6D5B8",
+            DrawerBackground = "#FFFDF9",
+            Divider = "#F0E5D1"
+        },
+        PaletteDark = new PaletteDark()
+        {
+            Primary = "#E6D5B8",
+            Background = "#1A1A19",
+            Surface = "#262624",
+            AppbarBackground = "rgba(26, 26, 25, 0.6)",
+            TextPrimary = "#E3DED0",
+            TextSecondary = "#8D7B68",
+            ActionDefault = "#E6D5B8",
+            Divider = "#333330"
+        },
+        LayoutProperties = new LayoutProperties()
+        {
+            DefaultBorderRadius = "20px",
+            DrawerWidthLeft = "260px"
+        },
+        Typography = new Typography()
+        {
+            Default = new DefaultTypography()
+            {
+                FontFamily = new[] {
+                    "Noto Sans TC", "微軟正黑體", "sans-serif"
+                }
+            }
+        }
+    };
+}

@@ -1,7 +1,83 @@
 ﻿@page "/"
 
-<PageTitle>Home</PageTitle>
+<MudContainer MaxWidth="MaxWidth.Medium" Class="mt-8">
+    @if (Posts == null || !Posts.Any())
+    {
+        <MudAlert Severity="Severity.Info">目前尚無抓取資料...</MudAlert>
+    }
+    else
+    {
+        <MudGrid>
+            @foreach (var post in Posts)
+            {
+                <MudItem xs="12">
+                    <MudCard Elevation="2"
+                             Class="rounded-lg mb-4">
+                        <MudCardHeader>
+                            <CardHeaderAvatar>
+                                <MudAvatar Color="Color.Primary"
+                                           Variant="Variant.Filled">
+                                    @post.Platform.Substring(0, 1).ToUpper()
+                                </MudAvatar>
+                            </CardHeaderAvatar>
+                            <CardHeaderContent>
+                                <MudText Typo="Typo.body1">
+                                    <b>@post.Author</b>
+                                </MudText>
+                                <MudText Typo="Typo.caption">
+                                    @post.CapturedAt.ToString("yyyy-MM-dd HH:mm") • @post.Platform
+                                </MudText>
+                            </CardHeaderContent>
+                            <CardHeaderActions>
+                                <MudIconButton
+                                    Icon="@Icons.Material.Filled.FavoriteBorder" 
+                                    Color="Color.Secondary" 
+                                    OnClick="@(() => SaveToIndexedDb(post))" />
+                                <MudIconButton
+                                    Icon="@Icons.Material.Filled.Share" 
+                                    Color="Color.Default" 
+                                    Link="@post.Url" 
+                                    Target="_blank" />
+                            </CardHeaderActions>
+                        </MudCardHeader>
+                        
+                        <MudCardContent>
+                            @foreach (var tag in post.Tags)
+                            {
+                                <MudChip T="string" 
+                                    Size="Size.Small" 
+                                    Variant="Variant.Text" 
+                                    Color="Color.Primary" 
+                                    Class="mb-2">
+                                    @tag
+                                </MudChip>
+                            }
+                            <MudText Typo="Typo.body2">
+                                @post.Content
+                            </MudText>
+                        </MudCardContent>
+                    </MudCard>
+                </MudItem>
+            }
+        </MudGrid>
+    }
+</MudContainer>
 
-<h1>Hello, world!</h1>
+@code {
+    private List<SocialPost> Posts = new();
 
-Welcome to your new app.
+    protected override async Task OnInitializedAsync()
+    {
+        Posts.Add(new SocialPost {
+            Author = "UserA",
+            Content = "這是一個關於 WASM 的討論...",
+            Url = "https://...",
+            Tags = ["趨勢追蹤", "科技"]
+        });
+    }
+
+    private async Task SaveToIndexedDb(SocialPost post)
+    {
+        // 這裡實作你之前想做的：存入 IndexedDB 的邏輯
+    }
+}
