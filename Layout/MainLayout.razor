@@ -10,18 +10,31 @@
             Auto Catch
         </MudText>
         <MudSpacer />
-        <MudIconButton Icon="@(_isDarkMode ? Icons.Material.Filled.LightMode : Icons.Material.Filled.DarkMode)" 
-                       Color="Color.Primary" 
-                       OnClick="@((e) => _isDarkMode = !_isDarkMode)" />
+        <MudIconButton
+            Icon="@(_isDarkMode ? Icons.Material.Filled.LightMode : Icons.Material.Filled.DarkMode)" 
+            Color="Color.Primary" 
+            OnClick="@((e) => _isDarkMode = !_isDarkMode)" />
     </MudAppBar>
-    
-    <MudDrawer @bind-Open="_drawerOpen" Elevation="1">
-        <MudText Typo="Typo.h5" Class="mt-1">Application</MudText>
-    </MudDrawer>
 
     <MudMainContent>
         @Body
     </MudMainContent>
+
+    <MudAppBar Bottom="true"
+               Fixed="true"
+               Elevation="4"
+               Class="bottom-appbar">
+        <div class="d-flex justify-space-around w-100">
+            <MudIconButton Icon="@Icons.Material.Filled.Radar"
+                           Color="Color.Inherit"
+                           href="/" />
+            <MudIconButton Icon="@Icons.Material.Filled.Favorite"
+                           Color="Color.Inherit"
+                           href="/favorites" />
+            <MudIconButton Icon="@Icons.Material.Filled.Settings" 
+                           Color="Color.Inherit" />
+        </div>
+    </MudAppBar>
 </MudLayout>
 
 <style>
@@ -33,6 +46,14 @@
         color: var(--mud-palette-text-primary) !important; 
     }
 
+    .bottom-appbar.mud-appbar {
+        background-color: var(--mud-palette-appbar-background) !important;
+        backdrop-filter: blur(20px) saturate(180%) !important;
+        -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+        border-top: 0.5px solid rgba(166, 137, 102, 0.15) !important;
+        color: var(--mud-palette-text-primary) !important; 
+    }
+
     .appbar-title {
         color: var(--mud-palette-text-primary) !important;
         font-weight: 800 !important;
@@ -40,7 +61,6 @@
 </style>
 
 @code {
-    bool _drawerOpen = true;
     bool _isDarkMode = false;
 
     private MudTheme CustomTheme = new MudTheme()

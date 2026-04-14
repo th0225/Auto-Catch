@@ -1,0 +1,78 @@
+@page "/favorites"
+
+@using AutoCatch.Components
+@using AutoCatch.Models
+@using AutoCatch.Services
+
+@inject IndexedDbService IndexedDbService
+@inject ISnackbar Snackbar
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class="mt-8">
+    <MudText Typo="Typo.h5"
+             Align="Align.Center"
+             Class="mb-6 mud-text-primary"
+             Style="font-weight: 800;">
+        我的收藏
+    </MudText>
+
+    @if (_favorites == null)
+    {
+        <MudProgressLinear Color="Color.Primary"
+                           Indeterminate="true"
+                           Class="my-7" />
+    }
+    else if (!_favorites.Any())
+    {
+        <div class="d-flex flex-column align-center justify-center mt-15"
+             style="opacity: 0.6;">
+            <MudIcon Icon="@Icons.Material.Filled.FavoriteBorder"
+                     Style="font-size: 5rem;"
+                     Color="Color.Default" />
+            <MudText Typo="Typo.h6"
+                     Class="mt-4">
+                目前還沒有收藏任何貼文
+            </MudText>
+            <MudButton Variant="Variant.Text"
+                       Color="Color.Primary"
+                       Href="/"
+                       Class="mt-2">
+                去首頁逛逛
+            </MudButton>
+        </div>
+    }
+    else
+    {
+        @* 顯示收藏清單 *@
+        @foreach (var post in _favorites)
+        {
+            <PostCard 
+                Post="post" 
+                IsFavorite="true" 
+                OnFavoriteChanged="HandleRemoveFavorite" />
+        }
+    }
+</MudContainer>
+
+@code {
+    private List<SocialPost>? _favorites;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadFavorites();
+    }
+
+    private async Task LoadFavorites()
+    {
+        _favorites = await IndexedDbService.GetFavoritesAsync();
+    }
+
+    private async Task HandleRemoveFavorite(SocialPost post)
+    {
+        bool success = await IndexedDbService.RemoveRecordsAsync(post.Id);
+        if (success)
+        {
+            Snackbar.Add("已從收藏清單移除", Severity.Info);
+            await LoadFavorites();
+        }
+    }
+}
