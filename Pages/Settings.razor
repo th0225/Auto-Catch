@@ -1,0 +1,93 @@
+@page "/settings"
+
+@using AutoCatch.Models
+@inject ISnackbar Snackbar
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class="mt-8">
+        <MudText Typo="Typo.h5"
+             Align="Align.Center"
+             Class="mb-6 mud-text-primary"
+             Style="font-weight: 800;">
+            爬蟲設定
+        </MudText>
+
+    <MudPaper Class="mud-glass pa-6 mb-6">
+        <MudText Typo="Typo.subtitle1"
+                 Class="mb-4"
+                 Style="font-weight: bold;">
+            追蹤關鍵字
+        </MudText>
+        
+        @* 關鍵字輸入框 *@
+        <MudTextField @bind-Value="_currentKeyword" 
+                      Label="輸入關鍵字並按 Enter" 
+                      Variant="Variant.Outlined" 
+                      OnKeyDown="HandleKeyDown"
+                      Adornment="Adornment.End" 
+                      AdornmentIcon="@Icons.Material.Filled.Add" />
+
+        <div class="d-flex flex-wrap mt-4">
+            @foreach (var kw in _settings.Keywords)
+            {
+                <MudChip T="string"
+                         Color="Color.Primary" 
+                         Variant="Variant.Text" 
+                         OnClose="(() => RemoveKeyword(kw))" 
+                         Class="ma-1">@kw</MudChip>
+            }
+        </div>
+    </MudPaper>
+
+    <MudPaper Class="mud-glass pa-6">
+        <MudText Typo="Typo.subtitle1"
+                 Class="mb-4"
+                 Style="font-weight: bold;">
+            社群平台
+        </MudText>
+        
+        <MudStack>
+            <MudSwitch @bind-Value="_settings.EnableThreads" 
+                       Label="Threads" 
+                       Color="Color.Primary" />
+            <MudSwitch @bind-Value="_settings.EnablePtt" 
+                       Label="PTT (開發中)" 
+                       Disabled
+                       Color="Color.Default" />
+            <MudSwitch @bind-Value="_settings.EnableX" 
+                       Label="X (開發中)" 
+                       Disabled
+                       Color="Color.Default" />
+        </MudStack>
+    </MudPaper>
+
+    <MudButton Variant="Variant.Filled" 
+               Color="Color.Primary" 
+               FullWidth="true" 
+               Class="mt-8 py-3" 
+               OnClick="SaveSettings">儲存設定</MudButton>
+</MudContainer>
+
+@code {
+    private UserSettings _settings = new();
+    private string _currentKeyword = "";
+
+    private void HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !string.IsNullOrWhiteSpace(_currentKeyword))
+        {
+            if (!_settings.Keywords.Contains(_currentKeyword))
+            {
+                _settings.Keywords.Add(_currentKeyword);
+                _currentKeyword = "";
+            }
+        }
+    }
+
+    private void RemoveKeyword(string kw) => _settings.Keywords.Remove(kw);
+
+    private void SaveSettings()
+    {
+        // 這裡之後串接 IndexedDbService 儲存
+        Snackbar.Add("設定已儲存！雷達準備就緒。", Severity.Success);
+    }
+}
