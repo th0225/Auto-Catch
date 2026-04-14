@@ -1,0 +1,62 @@
+<MudCard Elevation="2" Class="rounded-lg mb-4">
+    <MudCardHeader>
+        <CardHeaderAvatar>
+            <MudAvatar Color="Color.Primary"
+                        Variant="Variant.Filled">
+                @Post.Platform.Substring(0, 1).ToUpper()
+            </MudAvatar>
+        </CardHeaderAvatar>
+        <CardHeaderContent>
+            <MudText Typo="Typo.body1">
+                <b>@Post.Author</b>
+            </MudText>
+            <MudText Typo="Typo.caption">
+                @Post.CapturedAt.ToString(
+                    "yyyy-MM-dd HH:mm") • @Post.Platform
+            </MudText>
+        </CardHeaderContent>
+        <CardHeaderActions>
+            <MudIconButton
+                Icon="@(IsFavorite ? Icons.Material.Filled.Favorite : Icons.Material.Filled.FavoriteBorder)" 
+                Color="@(IsFavorite ? Color.Error : Color.Secondary)"
+                OnClick="@(() => OnFavoriteToggle())" />
+            <MudIconButton
+                Icon="@Icons.Material.Filled.Share" 
+                Color="Color.Default" 
+                Link="@Post.Url" 
+                Target="_blank" />
+        </CardHeaderActions>
+    </MudCardHeader>
+
+    <MudCardContent>
+        @foreach (var tag in Post.Tags)
+        {
+            <MudChip T="string" 
+                Size="Size.Small" 
+                Variant="Variant.Text" 
+                Color="Color.Primary" 
+                Class="mb-2">
+                @tag
+            </MudChip>
+        }
+        <MudText Typo="Typo.body2">
+            @Post.Content
+        </MudText>
+    </MudCardContent>
+</MudCard>
+
+@code {
+    [Parameter]
+    public SocialPost Post { get; set; } = default!;
+    
+    [Parameter]
+    public bool IsFavorite { get; set; } = false;
+
+    [Parameter]
+    public EventCallback<SocialPost> OnFavoriteChanged { get; set; }
+
+    private async Task OnFavoriteToggle()
+    {
+        await OnFavoriteChanged.InvokeAsync(Post);
+    }
+}

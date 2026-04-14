@@ -1,5 +1,6 @@
 ﻿@page "/"
 @using System.Net.Http.Json
+@using AutoCatch.Components
 
 @inject HttpClient Http
 @inject ISnackbar Snackbar
@@ -25,52 +26,10 @@
             @foreach (var post in _posts)
             {
                 <MudItem xs="12">
-                    <MudCard Elevation="2"
-                             Class="rounded-lg mb-4">
-                        <MudCardHeader>
-                            <CardHeaderAvatar>
-                                <MudAvatar Color="Color.Primary"
-                                           Variant="Variant.Filled">
-                                    @post.Platform.Substring(0, 1).ToUpper()
-                                </MudAvatar>
-                            </CardHeaderAvatar>
-                            <CardHeaderContent>
-                                <MudText Typo="Typo.body1">
-                                    <b>@post.Author</b>
-                                </MudText>
-                                <MudText Typo="Typo.caption">
-                                    @post.CapturedAt.ToString("yyyy-MM-dd HH:mm") • @post.Platform
-                                </MudText>
-                            </CardHeaderContent>
-                            <CardHeaderActions>
-                                <MudIconButton
-                                    Icon="@(IsCollected(post.Id) ? Icons.Material.Filled.Favorite : Icons.Material.Filled.FavoriteBorder)" 
-                                    Color="@(IsCollected(post.Id) ? Color.Error : Color.Secondary)"
-                                    OnClick="@(() => SaveToIndexedDb(post))" />
-                                <MudIconButton
-                                    Icon="@Icons.Material.Filled.Share" 
-                                    Color="Color.Default" 
-                                    Link="@post.Url" 
-                                    Target="_blank" />
-                            </CardHeaderActions>
-                        </MudCardHeader>
-                        
-                        <MudCardContent>
-                            @foreach (var tag in post.Tags)
-                            {
-                                <MudChip T="string" 
-                                    Size="Size.Small" 
-                                    Variant="Variant.Text" 
-                                    Color="Color.Primary" 
-                                    Class="mb-2">
-                                    @tag
-                                </MudChip>
-                            }
-                            <MudText Typo="Typo.body2">
-                                @post.Content
-                            </MudText>
-                        </MudCardContent>
-                    </MudCard>
+                    <PostCard
+                        Post="post"
+                        IsFavorite="IsCollected(post.Id)"
+                        OnFavoriteChanged="SaveToIndexedDb" />
                 </MudItem>
             }
         </MudGrid>
