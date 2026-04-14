@@ -1,6 +1,10 @@
 ﻿@page "/"
 @using System.Net.Http.Json
+
 @inject HttpClient Http
+@inject ISnackbar Snackbar
+@inject IndexedDbService IndexedDbService
+
 
 <MudContainer MaxWidth="MaxWidth.Medium" Class="mt-8">
     @if (_isLoading)
@@ -40,8 +44,8 @@
                             </CardHeaderContent>
                             <CardHeaderActions>
                                 <MudIconButton
-                                    Icon="@Icons.Material.Filled.FavoriteBorder" 
-                                    Color="Color.Secondary" 
+                                    Icon="@(IsCollected(post.Id) ? Icons.Material.Filled.Favorite : Icons.Material.Filled.FavoriteBorder)" 
+                                    Color="@(IsCollected(post.Id) ? Color.Error : Color.Secondary)"
                                     OnClick="@(() => SaveToIndexedDb(post))" />
                                 <MudIconButton
                                     Icon="@Icons.Material.Filled.Share" 
@@ -75,6 +79,7 @@
 
 @code {
     private List<SocialPost>? _posts = new();
+    private HashSet<string> _collectedIds = [];
     private bool _isLoading = false;
 
     protected override async Task OnInitializedAsync()
@@ -82,8 +87,15 @@
         try
         {
             _isLoading = true;
+            // 讀取json資料
             _posts = await Http.GetFromJsonAsync<List<SocialPost>>(
                 "data.json");
+
+            // 讀取收藏的id
+            var favorites =
+                await IndexedDbService.GetFavoritesAsync();
+            _collectedIds =
+                favorites.Select(f => f.Id).ToHashSet();
         }
         catch (Exception ex)
         {
@@ -97,6 +109,50 @@
 
     private async Task SaveToIndexedDb(SocialPost post)
     {
-        
+        bool isAdding = !_collectedIds.Contains(post.Id);
+        if (isAdding)
+        {
+            _collectedIds.Add(post.Id);
+        }
+        else
+        {
+            _collectedIds.Remove(post.Id);
+        }
+        StateHasChanged();
+
+        try
+        {
+            if (isAdding)
+            {
+                await IndexedDbService.UpsertRecordsAsync(post);
+            }
+            else
+            {
+                await IndexedDbService.RemoveRecordsAsync(post.Id);
+            }
+
+            Snackbar.Add(isAdding ? "已加入收藏清單！": "已取消收藏",
+                isAdding ? Severity.Success : Severity.Info);
+        }
+        catch (Exception ex)
+        {
+            if (isAdding)
+            {
+                _collectedIds.Remove(post.Id);
+            }
+            else
+            {
+                _collectedIds.Add(post.Id);
+            }
+
+            Snackbar.Add($"資料庫同步失敗: {ex.Message}",
+                Severity.Error);
+            StateHasChanged();
+        }
+    }
+
+    private bool IsCollected(string id)
+    {
+        return _collectedIds.Contains(id);
     }
 }
