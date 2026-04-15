@@ -1,10 +1,12 @@
 @page "/favorites"
 
 @using AutoCatch.Components
+@using AutoCatch.Components.UI
 @using AutoCatch.Models
-@using AutoCatch.Services
+@using AutoCatch.Service
+@using MudBlazor
 
-@inject IndexedDbService IndexedDbService
+@inject PostDbService PostDbService
 @inject ISnackbar Snackbar
 
 <MudContainer MaxWidth="MaxWidth.Medium" Class="mt-8">
@@ -45,10 +47,9 @@
         @* 顯示收藏清單 *@
         @foreach (var post in _favorites)
         {
-            <PostCard 
-                Post="post" 
-                IsFavorite="true" 
-                OnFavoriteChanged="HandleRemoveFavorite" />
+            <PostCard Post="post" 
+                      IsFavorite="true" 
+                      OnFavoriteChanged="HandleRemoveFavorite" />
         }
     }
 </MudContainer>
@@ -63,16 +64,13 @@
 
     private async Task LoadFavorites()
     {
-        _favorites = await IndexedDbService.GetFavoritesAsync();
+        _favorites = await PostDbService.GetFavoritesAsync();
     }
 
     private async Task HandleRemoveFavorite(SocialPost post)
     {
-        bool success = await IndexedDbService.RemoveRecordsAsync(post.Id);
-        if (success)
-        {
-            Snackbar.Add("已從收藏清單移除", Severity.Info);
-            await LoadFavorites();
-        }
+        await PostDbService.RemoveFavoriteAsync(post.Id);
+        Snackbar.Add("已從收藏清單移除", Severity.Info);
+        await LoadFavorites();
     }
 }

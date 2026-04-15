@@ -1,25 +1,45 @@
-using Microsoft.AspNetCore.Components.Web;
-using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
-using Microsoft.JSInterop;
+using AutoCatch.Components;
+using AutoCatch.Data;
+using AutoCatch.Service;
+using Microsoft.EntityFrameworkCore;
 using MudBlazor.Services;
-using AutoCatch;
-using AutoCatch.Services;
-using IndexedDB.Blazor;
 
-var builder = WebAssemblyHostBuilder.CreateDefault(args);
-builder.RootComponents.Add<App>("#app");
-builder.RootComponents.Add<HeadOutlet>("head::after");
+var builder = WebApplication.CreateBuilder(args);
 
+// 註冊 HttpClient 服務
+builder.Services.AddHttpClient();
+// Add services to the container.
+builder.Services.AddRazorComponents()
+    .AddInteractiveServerComponents();
 // MudBlazor
 builder.Services.AddMudServices();
-builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
 
-builder.Services.AddSingleton<IIndexedDbFactory, IndexedDbFactory>();
-builder.Services.AddScoped(sp => 
+// 讀取資料庫連線字串
+var connectionString =
+    builder.Configuration.GetConnectionString("DefaultConnection");
+// Sqlite
+builder.Services.AddDbContextFactory<AppDbContext>(options =>
+    options.UseSqlite(connectionString));
+
+builder.Services.AddScoped<PostDbService>();
+
+var app = builder.Build();
+
+// Configure the HTTP request pipeline.
+if (!app.Environment.IsDevelopment())
 {
-    var jsRuntime = sp.GetRequiredService<IJSRuntime>();
-    return new MyDbStore(jsRuntime, "AutoCatchDB", 1);
-});
-builder.Services.AddScoped<IndexedDbService>();
+    app.UseExceptionHandler("/Error", createScopeForErrors: true);
+    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+    app.UseHsts();
+}
+app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
+app.UseHttpsRedirection();
+app.UseStaticFiles();
 
-await builder.Build().RunAsync();
+app.UseAntiforgery();
+
+app.MapStaticAssets();
+app.MapRazorComponents<App>()
+    .AddInteractiveServerRenderMode();
+
+app.Run();

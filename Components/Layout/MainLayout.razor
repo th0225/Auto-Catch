@@ -11,7 +11,8 @@
         </MudText>
         <MudSpacer />
         <MudIconButton
-            Icon="@(_isDarkMode ? Icons.Material.Filled.LightMode : Icons.Material.Filled.DarkMode)" 
+            Icon="@(_isDarkMode ? Icons.Material.Filled.LightMode
+                                : Icons.Material.Filled.DarkMode)" 
             Color="Color.Primary" 
             OnClick="@((e) => _isDarkMode = !_isDarkMode)" />
     </MudAppBar>

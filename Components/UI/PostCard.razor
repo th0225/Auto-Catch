@@ -17,7 +17,8 @@
         </CardHeaderContent>
         <CardHeaderActions>
             <MudIconButton
-                Icon="@(IsFavorite ? Icons.Material.Filled.Favorite : Icons.Material.Filled.FavoriteBorder)" 
+                Icon="@(IsFavorite ? Icons.Material.Filled.Favorite
+                                   : Icons.Material.Filled.FavoriteBorder)" 
                 Color="@(IsFavorite ? Color.Error : Color.Secondary)"
                 OnClick="@(() => OnFavoriteToggle())" />
             <MudIconButton

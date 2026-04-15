@@ -1,10 +1,16 @@
 ﻿@page "/"
 @using System.Net.Http.Json
 @using AutoCatch.Components
+@using AutoCatch.Components.UI
+@using AutoCatch.Service
+@using AutoCatch.Models
+@using MudBlazor
+@using System.Text.Json
 
 @inject HttpClient Http
 @inject ISnackbar Snackbar
-@inject IndexedDbService IndexedDbService
+@inject IWebHostEnvironment Env
+@inject PostDbService PostDbService
 
 <MudContainer MaxWidth="MaxWidth.Medium" Class="mt-8">
     @if (_isLoading)
@@ -25,10 +31,9 @@
             @foreach (var post in _posts)
             {
                 <MudItem xs="12">
-                    <PostCard
-                        Post="post"
-                        IsFavorite="IsCollected(post.Id)"
-                        OnFavoriteChanged="SaveToIndexedDb" />
+                    <PostCard Post="post"
+                              IsFavorite="IsCollected(post.Id)"
+                              OnFavoriteChanged="SaveToIndexedDb" />
                 </MudItem>
             }
         </MudGrid>
@@ -45,13 +50,20 @@
         try
         {
             _isLoading = true;
-            // 讀取json資料
-            _posts = await Http.GetFromJsonAsync<List<SocialPost>>(
-                "data.json");
+            var filePath = Path.Combine(Env.WebRootPath, "data.json");
+            
+            if (File.Exists(filePath))
+            {
+                // 讀取json資料
+                var jsonString =
+                    await File.ReadAllTextAsync(filePath);
+                _posts =
+                    JsonSerializer.Deserialize<List<SocialPost>>(jsonString);
+            }
 
             // 讀取收藏的id
             var favorites =
-                await IndexedDbService.GetFavoritesAsync();
+                await PostDbService.GetFavoritesAsync();
             _collectedIds =
                 favorites.Select(f => f.Id).ToHashSet();
         }
@@ -82,11 +94,11 @@
         {
             if (isAdding)
             {
-                await IndexedDbService.UpsertRecordsAsync(post);
+                await PostDbService.UpsertFavoriteAsync(post);
             }
             else
             {
-                await IndexedDbService.RemoveRecordsAsync(post.Id);
+                await PostDbService.RemoveFavoriteAsync(post.Id);
             }
 
             Snackbar.Add(isAdding ? "已加入收藏清單！": "已取消收藏",

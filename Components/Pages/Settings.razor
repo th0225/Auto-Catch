@@ -1,6 +1,8 @@
 @page "/settings"
 
 @using AutoCatch.Models
+@using MudBlazor
+
 @inject ISnackbar Snackbar
 
 <MudContainer MaxWidth="MaxWidth.Medium" Class="mt-8">
@@ -22,7 +24,6 @@
         <MudTextField @bind-Value="_currentKeyword" 
                       Label="輸入關鍵字並按 Enter" 
                       Variant="Variant.Outlined" 
-                      OnKeyDown="HandleKeyDown"
                       Adornment="Adornment.End" 
                       AdornmentIcon="@Icons.Material.Filled.Add" />
 
@@ -71,7 +72,7 @@
     private UserSettings _settings = new();
     private string _currentKeyword = "";
 
-    private void HandleKeyDown(KeyboardEventArgs e)
+    @* private void HandleKeyDown(KeyboardEventArgs e)
     {
         if (e.Key == "Enter" && !string.IsNullOrWhiteSpace(_currentKeyword))
         {
@@ -81,7 +82,7 @@
                 _currentKeyword = "";
             }
         }
-    }
+    } *@
 
     private void RemoveKeyword(string kw) => _settings.Keywords.Remove(kw);
 
