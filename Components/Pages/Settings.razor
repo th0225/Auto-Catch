@@ -4,6 +4,7 @@
 @using MudBlazor
 
 @inject ISnackbar Snackbar
+@inject SettingDbService SettingDbService
 
 <MudContainer MaxWidth="MaxWidth.Medium" Class="mt-8">
         <MudText Typo="Typo.h5"
@@ -14,51 +15,69 @@
         </MudText>
 
     <MudPaper Class="mud-glass pa-6 mb-6">
-        <MudText Typo="Typo.subtitle1"
-                 Class="mb-4"
-                 Style="font-weight: bold;">
-            追蹤關鍵字
-        </MudText>
-        
-        @* 關鍵字輸入框 *@
-        <MudTextField @bind-Value="_currentKeyword" 
-                      Label="輸入關鍵字並按 Enter" 
-                      Variant="Variant.Outlined" 
-                      Adornment="Adornment.End" 
-                      AdornmentIcon="@Icons.Material.Filled.Add" />
-
-        <div class="d-flex flex-wrap mt-4">
-            @foreach (var kw in _settings.Keywords)
-            {
-                <MudChip T="string"
-                         Color="Color.Primary" 
-                         Variant="Variant.Text" 
-                         OnClose="(() => RemoveKeyword(kw))" 
-                         Class="ma-1">@kw</MudChip>
-            }
-        </div>
-    </MudPaper>
-
-    <MudPaper Class="mud-glass pa-6">
-        <MudText Typo="Typo.subtitle1"
-                 Class="mb-4"
-                 Style="font-weight: bold;">
-            社群平台
-        </MudText>
-        
-        <MudStack>
-            <MudSwitch @bind-Value="_settings.EnableThreads" 
-                       Label="Threads" 
+        <div class="d-flex align-center justify-space-between">
+            <MudText Typo="Typo.subtitle1"
+                     Style="font-weight: bold;">
+                PTT 追蹤看板
+            </MudText>
+            <MudSwitch @bind-Value="_pttSettings.Enabled"
                        Color="Color.Primary" />
-            <MudSwitch @bind-Value="_settings.EnablePtt" 
-                       Label="PTT (開發中)" 
-                       Disabled
-                       Color="Color.Default" />
-            <MudSwitch @bind-Value="_settings.EnableX" 
-                       Label="X (開發中)" 
-                       Disabled
-                       Color="Color.Default" />
-        </MudStack>
+        </div>
+
+        @if (_pttSettings.Enabled)
+        {
+            <MudPaper Elevation="0"
+                      Class="pa-4 mt-2"
+                      Style="background: rgba(0,0,0,0.03);
+                             border-radius: 12px;">
+                @* 第一列：看板輸入 *@
+                <div class="d-flex align-start">
+                    <MudTextField @bind-Value="_currentBoard"
+                                  Label="輸入看板 (例如: Lifeismoney)" 
+                                  Variant="Variant.Outlined" 
+                                  Margin="Margin.Dense"
+                                  OnKeyDown="@HandleKeyDown"
+                                  placeholder="Lifeismoney"
+                                  HelperText="輸入完請按 Enter 或點擊新增"
+                                  Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.Search"
+                                  Class="flex-grow-1" />
+                    
+                    <MudIconButton Icon="@Icons.Material.Filled.Add"
+                                   Variant="Variant.Filled"
+                                   Color="Color.Primary" 
+                                   OnClick="AddBoard"
+                                   Class="ml-2 mt-1"
+                                   Size="Size.Medium" />
+                </div>
+
+                @* 第二列：數量設定與 Chip 顯示 *@
+                <div class="d-flex align-center mt-4">
+                    <MudNumericField @bind-Value="_numPttPost"
+                                     Label="抓取篇數"
+                                     Variant="Variant.Outlined"
+                                     Margin="Margin.Dense"
+                                     Min="1" Max="100"
+                                     HideSpinButtons
+                                     Style="max-width: 120px;" />
+                    
+                    <div class="ml-4 d-flex flex-wrap"
+                         style="max-height: 80px; overflow-y: auto;">
+                        @foreach (var board in _pttSettings.Boards)
+                        {
+                            <MudChip T="string"
+                                     Color="Color.Primary" 
+                                     Variant="Variant.Text" 
+                                     OnClose="(() => RemoveBoard(board))"
+                                     Size="Size.Small"
+                                     Class="ma-1">
+                                @board
+                            </MudChip>
+                        }
+                    </div>
+                </div>
+            </MudPaper>
+        }
     </MudPaper>
 
     <MudButton Variant="Variant.Filled" 
@@ -69,26 +88,41 @@
 </MudContainer>
 
 @code {
-    private UserSettings _settings = new();
-    private string _currentKeyword = "";
+    private PttSettings _pttSettings = new();
+    private ThreadsSettings _threadsSettings = new();
+    private string _currentBoard = string.Empty;
+    private int _numPttPost = 30;
 
-    @* private void HandleKeyDown(KeyboardEventArgs e)
+    protected override async Task OnInitializedAsync()
     {
-        if (e.Key == "Enter" && !string.IsNullOrWhiteSpace(_currentKeyword))
-        {
-            if (!_settings.Keywords.Contains(_currentKeyword))
-            {
-                _settings.Keywords.Add(_currentKeyword);
-                _currentKeyword = "";
-            }
-        }
-    } *@
+        await base.OnInitializedAsync();
 
-    private void RemoveKeyword(string kw) => _settings.Keywords.Remove(kw);
+        _pttSettings = await SettingDbService.GetPttSettingsAsync();
+        _threadsSettings = 
+            await SettingDbService.GetThreadsSettingsAsync();
+    }
+
+    private void AddBoard()
+    {
+        if (!string.IsNullOrWhiteSpace(_currentBoard) &&
+            !_pttSettings.Boards.Contains(_currentBoard))
+        {
+            _pttSettings.Boards.Add(_currentBoard.Trim());
+            _currentBoard = "";
+            Snackbar.Add($"已加入看板: {_currentBoard}", Severity.Info);
+        }
+    }
+
+    private void HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") AddBoard();
+    }
+
+    private void RemoveBoard(string board) => 
+        _pttSettings.Boards.Remove(board);
 
     private void SaveSettings()
     {
-        // 這裡之後串接 IndexedDbService 儲存
-        Snackbar.Add("設定已儲存！雷達準備就緒。", Severity.Success);
+
     }
 }

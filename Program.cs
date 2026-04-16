@@ -22,6 +22,8 @@ builder.Services.AddDbContextFactory<AppDbContext>(options =>
     options.UseSqlite(connectionString));
 
 builder.Services.AddScoped<PostDbService>();
+builder.Services.AddScoped<SettingDbService>();
+builder.Services.AddScoped<PttScraperService>();
 
 var app = builder.Build();
 

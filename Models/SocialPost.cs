@@ -13,7 +13,7 @@ public class SocialPost
     // 內容
     public string Content { get; set; } = string.Empty;
     // 時間
-    public DateTime CapturedAt { get; set; } = DateTime.Now;
+    public DateTime Date{ get; set; } = DateTime.Now;
     // 網址
     public string Url { get; set; } = string.Empty;
     // 

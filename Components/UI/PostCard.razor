@@ -8,11 +8,13 @@
         </CardHeaderAvatar>
         <CardHeaderContent>
             <MudText Typo="Typo.body1">
-                <b>@Post.Author</b>
+                <b>@Post.Content</b>
             </MudText>
-            <MudText Typo="Typo.caption">
-                @Post.CapturedAt.ToString(
-                    "yyyy-MM-dd HH:mm") • @Post.Platform
+            <MudText Typo="Typo.caption" Style="color: gray;">
+                @Post.Author • 
+                @(Post.Date.Hour == 0 && Post.Date.Minute == 0 
+                    ? Post.Date.ToString("yyyy-MM-dd") 
+                    : Post.Date.ToString("yyyy-MM-dd HH:mm")) 
             </MudText>
         </CardHeaderContent>
         <CardHeaderActions>
@@ -24,7 +26,7 @@
             <MudIconButton
                 Icon="@Icons.Material.Filled.Share" 
                 Color="Color.Default" 
-                Link="@Post.Url" 
+                Href="@Post.Url" 
                 Target="_blank" />
         </CardHeaderActions>
     </MudCardHeader>
@@ -40,9 +42,9 @@
                 @tag
             </MudChip>
         }
-        <MudText Typo="Typo.body2">
+        @* <MudText Typo="Typo.body2">
             @Post.Content
-        </MudText>
+        </MudText> *@
     </MudCardContent>
 </MudCard>
 

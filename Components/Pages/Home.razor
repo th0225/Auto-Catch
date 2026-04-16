@@ -11,6 +11,7 @@
 @inject ISnackbar Snackbar
 @inject IWebHostEnvironment Env
 @inject PostDbService PostDbService
+@inject PttScraperService PttScraperService
 
 <MudContainer MaxWidth="MaxWidth.Medium" Class="mt-8">
     @if (_isLoading)
@@ -27,7 +28,7 @@
     }
     else
     {
-        <MudGrid>
+        <MudGrid Spacing="2">
             @foreach (var post in _posts)
             {
                 <MudItem xs="12">
@@ -50,16 +51,9 @@
         try
         {
             _isLoading = true;
-            var filePath = Path.Combine(Env.WebRootPath, "data.json");
-            
-            if (File.Exists(filePath))
-            {
-                // 讀取json資料
-                var jsonString =
-                    await File.ReadAllTextAsync(filePath);
-                _posts =
-                    JsonSerializer.Deserialize<List<SocialPost>>(jsonString);
-            }
+
+            _posts = await PttScraperService.GetPttPosts(
+                "Gossiping", 100);
 
             // 讀取收藏的id
             var favorites =

@@ -3,6 +3,7 @@ using System;
 using AutoCatch.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AutoCatch.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260416014248_UpdatePttSettings")]
+    partial class UpdatePttSettings
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.6");
@@ -23,7 +26,7 @@ namespace AutoCatch.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("Boards")
+                    b.PrimitiveCollection<string>("Boards")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
@@ -39,16 +42,6 @@ namespace AutoCatch.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("PttSettings");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Boards = "[\"Lifeismoney\"]",
-                            Enabled = true,
-                            MinNrec = 0,
-                            RefreshIntervalMinutes = 30
-                        });
                 });
 
             modelBuilder.Entity("AutoCatch.Models.SocialPost", b =>
@@ -96,7 +89,7 @@ namespace AutoCatch.Migrations
                     b.Property<bool>("Enabled")
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("Keywords")
+                    b.PrimitiveCollection<string>("Keywords")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
@@ -109,16 +102,6 @@ namespace AutoCatch.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("ThreadsSettings");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Enabled = true,
-                            Keywords = "[\"AI\"]",
-                            MinLikes = 0,
-                            RefreshIntervalMinutes = 30
-                        });
                 });
 #pragma warning restore 612, 618
         }

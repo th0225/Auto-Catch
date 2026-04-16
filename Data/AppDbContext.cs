@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using AutoCatch.Models;
+using System.Text.Json;
 
 namespace AutoCatch.Data;
 
@@ -9,5 +10,57 @@ public class AppDbContext : DbContext
         base(options) {}
 
     public DbSet<SocialPost> Favorites => Set<SocialPost>();
-    public DbSet<UserSettings> UserSettings => Set<UserSettings>();
+    public DbSet<PttSettings> PttSettings => Set<PttSettings>();
+    public DbSet<ThreadsSettings> ThreadsSettings => Set<ThreadsSettings>();
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+
+        modelBuilder.Entity<PttSettings>()
+            .Property(e => e.Boards)
+            .HasConversion(
+                v => JsonSerializer.Serialize(
+                    v, (JsonSerializerOptions)null
+                ),
+                v => JsonSerializer.Deserialize<List<string>>(
+                    v, (JsonSerializerOptions)null)
+                    ?? new List<string>()
+            );
+        
+        modelBuilder.Entity<ThreadsSettings>()
+            .Property(e => e.Keywords)
+            .HasConversion(
+                v => JsonSerializer.Serialize(
+                    v, (JsonSerializerOptions)null
+                ),
+                v => JsonSerializer.Deserialize<List<string>>(
+                    v, (JsonSerializerOptions)null)
+                    ?? new List<string>()
+            );
+
+        modelBuilder.Entity<PttSettings>().HasData(
+            new PttSettings
+            {
+                Id = 1,
+                Enabled = true,
+                Boards = ["Lifeismoney"],
+                NumPost = 10,
+                MinNrec = 0,
+                RefreshIntervalMinutes = 30
+            }
+        );
+
+        modelBuilder.Entity<ThreadsSettings>().HasData(
+            new ThreadsSettings
+            {
+                Id = 1,
+                Enabled = true,
+                Keywords = ["AI"],
+                NumPost = 10,
+                MinLikes = 0,
+                RefreshIntervalMinutes = 30
+            }
+        );
+    }
 }
