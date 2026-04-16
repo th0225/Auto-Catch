@@ -18,14 +18,13 @@ public class AppDbContext : DbContext
         base.OnModelCreating(modelBuilder);
 
         modelBuilder.Entity<PttSettings>()
-            .Property(e => e.Boards)
+            .Property(e => e.BoardConfigs)
             .HasConversion(
                 v => JsonSerializer.Serialize(
                     v, (JsonSerializerOptions)null
                 ),
-                v => JsonSerializer.Deserialize<List<string>>(
-                    v, (JsonSerializerOptions)null)
-                    ?? new List<string>()
+                v => JsonSerializer.Deserialize<List<PttBoardConfig>>(
+                    v, (JsonSerializerOptions)null) ?? new List<PttBoardConfig>()
             );
         
         modelBuilder.Entity<ThreadsSettings>()
@@ -44,10 +43,16 @@ public class AppDbContext : DbContext
             {
                 Id = 1,
                 Enabled = true,
-                Boards = ["Lifeismoney"],
-                NumPost = 10,
-                MinNrec = 0,
-                RefreshIntervalMinutes = 30
+                BoardConfigs =
+                [
+                    new PttBoardConfig
+                    {
+                        Name = "Lifeismoney",
+                        NumPost = 10,
+                        MinNrec = 0,
+                        RefreshIntervalMinutes = 30
+                    }
+                ]
             }
         );
 

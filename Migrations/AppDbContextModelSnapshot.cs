@@ -23,17 +23,11 @@ namespace AutoCatch.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("Boards")
+                    b.Property<string>("BoardConfigs")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<bool>("Enabled")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("MinNrec")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("RefreshIntervalMinutes")
                         .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
@@ -44,10 +38,8 @@ namespace AutoCatch.Migrations
                         new
                         {
                             Id = 1,
-                            Boards = "[\"Lifeismoney\"]",
-                            Enabled = true,
-                            MinNrec = 0,
-                            RefreshIntervalMinutes = 30
+                            BoardConfigs = "[{\"Name\":\"Lifeismoney\",\"NumPost\":10,\"MinNrec\":0,\"RefreshIntervalMinutes\":30}]",
+                            Enabled = true
                         });
                 });
 
@@ -103,6 +95,9 @@ namespace AutoCatch.Migrations
                     b.Property<int>("MinLikes")
                         .HasColumnType("INTEGER");
 
+                    b.Property<int>("NumPost")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int>("RefreshIntervalMinutes")
                         .HasColumnType("INTEGER");
 
@@ -117,6 +112,7 @@ namespace AutoCatch.Migrations
                             Enabled = true,
                             Keywords = "[\"AI\"]",
                             MinLikes = 0,
+                            NumPost = 10,
                             RefreshIntervalMinutes = 30
                         });
                 });

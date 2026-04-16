@@ -7,14 +7,38 @@
 @using MudBlazor
 @using System.Text.Json
 
-@inject HttpClient Http
 @inject ISnackbar Snackbar
-@inject IWebHostEnvironment Env
 @inject PostDbService PostDbService
+@inject SettingDbService SettingDbService
 @inject PttScraperService PttScraperService
+@inject PostStateService PostStateService
 
 <MudContainer MaxWidth="MaxWidth.Medium" Class="mt-8">
-    @if (_isLoading)
+    <div class="d-flex align-center justify-space-between mb-4">
+        <div class="d-flex align-center">
+            <MudText Typo="Typo.h5"
+                     Style="font-weight: 800;"
+                     Class="mud-text-primary mr-3">
+                PTT 最新情報
+            </MudText>
+            @if (PostStateService.LastPttUpdateTime.HasValue)
+            {
+                <MudText
+                    Typo="Typo.caption"
+                    Style="color: var(--mud-palette-text-secondary);">
+                    上次更新：@PostStateService.LastPttUpdateTime.Value.ToString("HH:mm:ss")
+                </MudText>
+            }
+        </div>
+
+        <MudIconButton Icon="@Icons.Material.Filled.Refresh" 
+                       OnClick="ManualRefresh" 
+                       Disabled="@PostStateService.IsLoading"
+                       Color="Color.Primary"
+                       Class="@(PostStateService.IsLoading ? "animate-spin" : "")" />
+    </div>
+
+    @if (PostStateService.IsLoading)
     {
         <MudSkeleton SkeletonType="SkeletonType.Rectangle"
                      Height="200px"
@@ -22,14 +46,15 @@
         <MudSkeleton SkeletonType="SkeletonType.Rectangle"
                      Height="200px" />
     }
-    else if (_posts == null || !_posts.Any())
+    else if (PostStateService.PttPosts == null ||
+            !PostStateService.PttPosts.Any())
     {
         <MudAlert Severity="Severity.Info">目前尚無抓取資料...</MudAlert>
     }
     else
     {
         <MudGrid Spacing="2">
-            @foreach (var post in _posts)
+            @foreach (var post in PostStateService.PttPosts)
             {
                 <MudItem xs="12">
                     <PostCard Post="post"
@@ -42,18 +67,46 @@
 </MudContainer>
 
 @code {
-    private List<SocialPost>? _posts = new();
     private HashSet<string> _collectedIds = [];
-    private bool _isLoading = false;
 
     protected override async Task OnInitializedAsync()
     {
+        if (PostStateService.PttPosts.Any())
+        {
+            return;
+        }
+
+        if (PostStateService.IsLoading)
+        {
+            return;
+        }
+
+        await RefreshPost();
+    }
+
+    private async Task ManualRefresh()
+    {
+
+    }
+
+    private async Task RefreshPost()
+    {
+        PostStateService.IsLoading = true;
+
         try
         {
-            _isLoading = true;
+            var pttSettings =
+                await SettingDbService.GetPttSettingsAsync();
+            var threadsSettings = 
+                await SettingDbService.GetThreadsSettingsAsync();
 
-            _posts = await PttScraperService.GetPttPosts(
-                "Gossiping", 100);
+            if (pttSettings.Enabled)
+            {
+                PostStateService.PttPosts = 
+                    await PttScraperService.CatchAllBoardsAsync(
+                        pttSettings.BoardConfigs
+                );
+            }
 
             // 讀取收藏的id
             var favorites =
@@ -67,7 +120,8 @@
         }
         finally
         {
-            _isLoading = false;
+            PostStateService.IsLoading = false;
+            await InvokeAsync(StateHasChanged);
         }
     }
 

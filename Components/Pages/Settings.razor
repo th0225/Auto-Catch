@@ -7,12 +7,12 @@
 @inject SettingDbService SettingDbService
 
 <MudContainer MaxWidth="MaxWidth.Medium" Class="mt-8">
-        <MudText Typo="Typo.h5"
-             Align="Align.Center"
-             Class="mb-6 mud-text-primary"
-             Style="font-weight: 800;">
+        @* <MudText Typo="Typo.h5"
+                 Align="Align.Center"
+                 Class="mb-6 mud-text-primary"
+                 Style="font-weight: 800;">
             爬蟲設定
-        </MudText>
+        </MudText> *@
 
     <MudPaper Class="mud-glass pa-6 mb-6">
         <div class="d-flex align-center justify-space-between">
@@ -26,77 +26,99 @@
 
         @if (_pttSettings.Enabled)
         {
-            <MudPaper Elevation="0"
-                      Class="pa-4 mt-2"
-                      Style="background: rgba(0,0,0,0.03);
-                             border-radius: 12px;">
-                @* 第一列：看板輸入 *@
-                <div class="d-flex align-start">
+            <div class="mt-4">
+                @* 看板新增區 (限制最多 3 個) *@
+                <div class="d-flex align-start mb-4">
                     <MudTextField @bind-Value="_currentBoard"
-                                  Label="輸入看板 (例如: Lifeismoney)" 
+                                  Label="新增看板 (上限 3 個)" 
                                   Variant="Variant.Outlined" 
                                   Margin="Margin.Dense"
-                                  OnKeyDown="@HandleKeyDown"
-                                  placeholder="Lifeismoney"
-                                  HelperText="輸入完請按 Enter 或點擊新增"
-                                  Adornment="Adornment.Start"
-                                  AdornmentIcon="@Icons.Material.Filled.Search"
-                                  Class="flex-grow-1" />
-                    
+                                  Disabled="@(_pttSettings.BoardConfigs.Count >= 3)"
+                                  Placeholder="例如: Lifeismoney"
+                                  OnKeyDown="@HandleKeyDown" />
                     <MudIconButton Icon="@Icons.Material.Filled.Add"
-                                   Variant="Variant.Filled"
-                                   Color="Color.Primary" 
                                    OnClick="AddBoard"
-                                   Class="ml-2 mt-1"
-                                   Size="Size.Medium" />
+                                   Disabled="@(_pttSettings.BoardConfigs.Count >= 3 || string.IsNullOrEmpty(_currentBoard))"
+                                   Color="Color.Primary" 
+                                   Class="ml-2 mt-1" />
                 </div>
 
-                @* 第二列：數量設定與 Chip 顯示 *@
-                <div class="d-flex align-center mt-4">
-                    <MudNumericField @bind-Value="_numPttPost"
-                                     Label="抓取篇數"
-                                     Variant="Variant.Outlined"
-                                     Margin="Margin.Dense"
-                                     Min="1" Max="100"
-                                     HideSpinButtons
-                                     Style="max-width: 120px;" />
-                    
-                    <div class="ml-4 d-flex flex-wrap"
-                         style="max-height: 80px; overflow-y: auto;">
-                        @foreach (var board in _pttSettings.Boards)
-                        {
-                            <MudChip T="string"
-                                     Color="Color.Primary" 
-                                     Variant="Variant.Text" 
-                                     OnClose="(() => RemoveBoard(board))"
-                                     Size="Size.Small"
-                                     Class="ma-1">
-                                @board
-                            </MudChip>
-                        }
-                    </div>
-                </div>
-            </MudPaper>
+                @* 個別看板設定卡片 *@
+                <MudStack Spacing="3">
+                    @foreach (var config in _pttSettings.BoardConfigs)
+                    {
+                        <MudPaper Class="pa-4 mud-glass"
+                                  Style="background: rgba(0,0,0,0.03);
+                                         border-radius: 12px;">
+                            <div class="d-flex justify-space-between align-center mb-2">
+                                <MudText Typo="Typo.subtitle1"
+                                         Style="font-weight: 900; color: var(--mud-palette-primary);">
+                                    @config.Name
+                                </MudText>
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" 
+                                               Size="Size.Small" 
+                                               Color="Color.Error" 
+                                               OnClick="@(() => _pttSettings.BoardConfigs.Remove(config))" />
+                            </div>
+
+                            <MudGrid Spacing="2">
+                                <MudItem xs="4">
+                                    <MudNumericField
+                                        @bind-Value="config.NumPost"
+                                        Label="文章數" 
+                                        Variant="Variant.Text"
+                                        Min="1"
+                                        Max="100"
+                                        Margin="Margin.Dense"
+                                        HideSpinButtons="true" />
+                                </MudItem>
+                                <MudItem xs="4">
+                                    <MudNumericField
+                                        @bind-Value="config.MinNrec"
+                                        Label="推文數" 
+                                        Variant="Variant.Text"
+                                        Min="0"
+                                        Margin="Margin.Dense"
+                                        HideSpinButtons="true" />
+                                </MudItem>
+                                <MudItem xs="4">
+                                    <MudNumericField
+                                        @bind-Value="config.RefreshIntervalMinutes" Label="間隔(分)" 
+                                        Variant="Variant.Text"
+                                        Min="5"
+                                        Margin="Margin.Dense"
+                                        HideSpinButtons="true" />
+                                </MudItem>
+                            </MudGrid>
+                        </MudPaper>
+                    }
+                </MudStack>
+            </div>
         }
+
+        <MudButton Variant="Variant.Filled" 
+                   Color="Color.Primary" 
+                   FullWidth="true" 
+                   Class="mt-8 py-3" 
+                   OnClick="SavePttSettingsAsync">
+            <MudText>
+                儲存設定
+            </MudText>
+        </MudButton>
     </MudPaper>
 
-    <MudButton Variant="Variant.Filled" 
-               Color="Color.Primary" 
-               FullWidth="true" 
-               Class="mt-8 py-3" 
-               OnClick="SaveSettings">儲存設定</MudButton>
 </MudContainer>
 
 @code {
     private PttSettings _pttSettings = new();
     private ThreadsSettings _threadsSettings = new();
     private string _currentBoard = string.Empty;
-    private int _numPttPost = 30;
 
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
 
+        // 取得設定
         _pttSettings = await SettingDbService.GetPttSettingsAsync();
         _threadsSettings = 
             await SettingDbService.GetThreadsSettingsAsync();
@@ -104,12 +126,28 @@
 
     private void AddBoard()
     {
-        if (!string.IsNullOrWhiteSpace(_currentBoard) &&
-            !_pttSettings.Boards.Contains(_currentBoard))
+        if (_pttSettings.BoardConfigs.Count >= 3)
         {
-            _pttSettings.Boards.Add(_currentBoard.Trim());
+            Snackbar.Add("雷達頻道已滿，最多只能追蹤 3 個看板喔！",
+                Severity.Warning);
+            return;
+        }
+
+        if (!string.IsNullOrWhiteSpace(_currentBoard))
+        {
+            var boardName = _currentBoard.Trim();
+            if (_pttSettings.BoardConfigs.Any(
+                x => x.Name.Equals(
+                    boardName, StringComparison.OrdinalIgnoreCase)))
+            {
+                Snackbar.Add("這個看板已經在清單中囉。", Severity.Info);
+                return;
+            }
+
+            _pttSettings.BoardConfigs.Add(
+                new PttBoardConfig { Name = boardName });
             _currentBoard = "";
-            Snackbar.Add($"已加入看板: {_currentBoard}", Severity.Info);
+            StateHasChanged();
         }
     }
 
@@ -118,11 +156,19 @@
         if (e.Key == "Enter") AddBoard();
     }
 
-    private void RemoveBoard(string board) => 
-        _pttSettings.Boards.Remove(board);
+    private void RemoveBoard(string board){}
 
-    private void SaveSettings()
+    private async Task SavePttSettingsAsync()
     {
-
+        try
+        {
+            await SettingDbService.UpdatePttSettingsAsync(_pttSettings);
+            Snackbar.Add("設定已儲存", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"儲存失敗: {ex.Message}",
+                Severity.Error);
+        }
     }
 }

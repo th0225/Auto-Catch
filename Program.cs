@@ -25,6 +25,8 @@ builder.Services.AddScoped<PostDbService>();
 builder.Services.AddScoped<SettingDbService>();
 builder.Services.AddScoped<PttScraperService>();
 
+builder.Services.AddSingleton<PostStateService>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

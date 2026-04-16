@@ -11,14 +11,40 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AutoCatch.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260415033135_AddDate")]
-    partial class AddDate
+    [Migration("20260416060653_UpdateSettingsSchema")]
+    partial class UpdateSettingsSchema
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.6");
+
+            modelBuilder.Entity("AutoCatch.Models.PttSettings", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("BoardConfigs")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("Enabled")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("PttSettings");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            BoardConfigs = "[{\"Name\":\"Lifeismoney\",\"NumPost\":10,\"MinNrec\":0,\"RefreshIntervalMinutes\":30}]",
+                            Enabled = true
+                        });
+                });
 
             modelBuilder.Entity("AutoCatch.Models.SocialPost", b =>
                 {
@@ -56,31 +82,42 @@ namespace AutoCatch.Migrations
                     b.ToTable("Favorites");
                 });
 
-            modelBuilder.Entity("AutoCatch.Models.UserSettings", b =>
+            modelBuilder.Entity("AutoCatch.Models.ThreadsSettings", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<bool>("EnablePtt")
+                    b.Property<bool>("Enabled")
                         .HasColumnType("INTEGER");
 
-                    b.Property<bool>("EnableThreads")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("EnableX")
-                        .HasColumnType("INTEGER");
-
-                    b.PrimitiveCollection<string>("Keywords")
+                    b.Property<string>("Keywords")
                         .IsRequired()
                         .HasColumnType("TEXT");
+
+                    b.Property<int>("MinLikes")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("NumPost")
+                        .HasColumnType("INTEGER");
 
                     b.Property<int>("RefreshIntervalMinutes")
                         .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
 
-                    b.ToTable("UserSettings");
+                    b.ToTable("ThreadsSettings");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Enabled = true,
+                            Keywords = "[\"AI\"]",
+                            MinLikes = 0,
+                            NumPost = 10,
+                            RefreshIntervalMinutes = 30
+                        });
                 });
 #pragma warning restore 612, 618
         }

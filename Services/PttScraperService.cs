@@ -3,8 +3,8 @@ using Microsoft.Playwright;
 
 public class PttScraperService
 {
-    public async Task<List<SocialPost>> GetPttPosts(
-        string board, int targetCount = 30)
+    public async Task<List<SocialPost>> GetPostsFromBoardAsync(
+        string board, int targetCount, int minPush)
     {
         using var playwright = await Playwright.CreateAsync();
         await using var browser = await playwright.Chromium.LaunchAsync(
@@ -32,6 +32,16 @@ public class PttScraperService
 
             foreach (var node in postNodes)
             {
+                var nrecElement = await node.QuerySelectorAsync(".nrec");
+                var nrecText = nrecElement != null ?
+                    await nrecElement.InnerTextAsync() : "";
+                int pushCount = ParsePushCount(nrecText);
+
+                if (pushCount < minPush)
+                {
+                    continue;
+                }
+
                 var titleElement = await node.QuerySelectorAsync(".title a");
                 if (titleElement == null)
                 {
@@ -58,7 +68,8 @@ public class PttScraperService
                     Url = "https://www.ptt.cc" + url,
                     Author = author,
                     Date = ParsePttDate(dateStr),
-                    Platform = "PTT"
+                    Platform = "PTT",
+                    Tags = [board]
                 });
 
                 if (allPosts.Count >= targetCount)
@@ -87,6 +98,23 @@ public class PttScraperService
         return allPosts;
     }
 
+    public async Task<List<SocialPost>> CatchAllBoardsAsync(
+        List<PttBoardConfig> configs)
+    {
+        var tasks = configs.Select(async config =>
+        {
+            return await GetPostsFromBoardAsync(
+                config.Name,
+                config.NumPost,
+                config.MinNrec
+            );
+        });
+
+        var results = await Task.WhenAll(tasks);
+
+        return [.. results.SelectMany(x => x).OrderByDescending(p => p.Date)];
+    }
+
     private DateTime ParsePttDate(string dateStr)
     {
         try {
@@ -94,5 +122,30 @@ public class PttScraperService
         } catch {
             return DateTime.Now;
         }
+    }
+
+    private int ParsePushCount(string nrecText)
+    {
+        if (string.IsNullOrEmpty(nrecText))
+        {
+            return 0;
+        }
+
+        if (nrecText == "爆")
+        {
+            return 100;
+        }
+
+        if (nrecText.StartsWith("X"))
+        {
+            return -10;
+        }
+
+        if (int.TryParse(nrecText, out int count))
+        {
+            return count;
+        }
+
+        return 0;
     }
 }

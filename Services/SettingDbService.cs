@@ -23,10 +23,16 @@ public class SettingDbService
             return new PttSettings
             {
                 Enabled = true,
-                Boards = ["Lifeismoney"],
-                NumPost = 10,
-                MinNrec = 0,
-                RefreshIntervalMinutes = 30
+                BoardConfigs =
+                [
+                    new PttBoardConfig
+                    {
+                        Name = "Lifeismoney",
+                        NumPost = 10,
+                        MinNrec = 0,
+                        RefreshIntervalMinutes = 30
+                    }
+                ]
             };
         }
         else
