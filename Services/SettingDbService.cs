@@ -23,6 +23,7 @@ public class SettingDbService
             return new PttSettings
             {
                 Enabled = true,
+                RefreshIntervalMinutes = 30,
                 BoardConfigs =
                 [
                     new PttBoardConfig
@@ -30,7 +31,7 @@ public class SettingDbService
                         Name = "Lifeismoney",
                         NumPost = 10,
                         MinNrec = 0,
-                        RefreshIntervalMinutes = 30
+                        HideReplies = true
                     }
                 ]
             };

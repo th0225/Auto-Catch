@@ -43,6 +43,7 @@ public class AppDbContext : DbContext
             {
                 Id = 1,
                 Enabled = true,
+                RefreshIntervalMinutes = 30,
                 BoardConfigs =
                 [
                     new PttBoardConfig
@@ -50,7 +51,7 @@ public class AppDbContext : DbContext
                         Name = "Lifeismoney",
                         NumPost = 10,
                         MinNrec = 0,
-                        RefreshIntervalMinutes = 30
+                        HideReplies = true
                     }
                 ]
             }

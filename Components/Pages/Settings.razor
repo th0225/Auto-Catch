@@ -26,6 +26,19 @@
 
         @if (_pttSettings.Enabled)
         {
+            <MudPaper Elevation="0"
+                      Class="pa-4 mb-6"
+                      Style="background: rgba(230, 213, 184, 0.1);
+                             border: 1px dashed #E6D5B8;">
+                <MudNumericField
+                    @bind-Value="_pttSettings.RefreshIntervalMinutes" 
+                    Label="抓取間隔 (分鐘)" 
+                    Variant="Variant.Text" 
+                    Min="5" 
+                    HelperText="所有看板將共用此掃描頻率"
+                    Margin="Margin.Dense" />
+            </MudPaper>
+
             <div class="mt-4">
                 @* 看板新增區 (限制最多 3 個) *@
                 <div class="d-flex align-start mb-4">
@@ -82,12 +95,12 @@
                                         HideSpinButtons="true" />
                                 </MudItem>
                                 <MudItem xs="4">
-                                    <MudNumericField
-                                        @bind-Value="config.RefreshIntervalMinutes" Label="間隔(分)" 
-                                        Variant="Variant.Text"
-                                        Min="5"
-                                        Margin="Margin.Dense"
-                                        HideSpinButtons="true" />
+                                    <MudCheckBox
+                                        @bind-Value="config.HideReplies" 
+                                        Label="過濾 Re:" 
+                                        Color="Color.Secondary" 
+                                        Dense="true"
+                                        Size="Size.Small" />
                                 </MudItem>
                             </MudGrid>
                         </MudPaper>

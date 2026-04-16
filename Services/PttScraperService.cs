@@ -4,7 +4,7 @@ using Microsoft.Playwright;
 public class PttScraperService
 {
     public async Task<List<SocialPost>> GetPostsFromBoardAsync(
-        string board, int targetCount, int minPush)
+        string board, int targetCount, int minPush, bool hideReplies)
     {
         using var playwright = await Playwright.CreateAsync();
         await using var browser = await playwright.Chromium.LaunchAsync(
@@ -37,19 +37,29 @@ public class PttScraperService
                     await nrecElement.InnerTextAsync() : "";
                 int pushCount = ParsePushCount(nrecText);
 
+                // 略過最小推文數
                 if (pushCount < minPush)
                 {
                     continue;
                 }
 
+                // 略過無標題文章
                 var titleElement = await node.QuerySelectorAsync(".title a");
                 if (titleElement == null)
                 {
                     continue;
                 }
 
+                // 略過公告、置底
                 var title = await titleElement.InnerTextAsync();
-                if (title.Contains("[公告]"))
+                if (title.Contains("[公告]") || title.Contains("[置底]"))
+                {
+                    continue;
+                }
+
+                // 略過回文
+                if (hideReplies &&
+                    title.StartsWith("Re:", StringComparison.OrdinalIgnoreCase))
                 {
                     continue;
                 }
@@ -106,7 +116,8 @@ public class PttScraperService
             return await GetPostsFromBoardAsync(
                 config.Name,
                 config.NumPost,
-                config.MinNrec
+                config.MinNrec,
+                config.HideReplies
             );
         });
 

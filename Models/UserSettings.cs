@@ -9,6 +9,8 @@ public class PttSettings
     
     // 是否啟用
     public bool Enabled{ get; set; } = false;
+    // 更新時間(分)
+    public int RefreshIntervalMinutes { get; set; } = 30;
     // 抓取的看版
     public List<PttBoardConfig> BoardConfigs { get; set; } = [];
 }
@@ -21,8 +23,8 @@ public class PttBoardConfig
     public int NumPost {get; set; } = 10;
     // 推文數
     public int MinNrec { get; set; } = 0;
-    // 更新時間(分)
-    public int RefreshIntervalMinutes { get; set; } = 30;
+    // 是否隱藏回文
+    public bool HideReplies { get; set; } = false;
 }
 
 public class ThreadsSettings
