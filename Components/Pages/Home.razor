@@ -89,6 +89,12 @@
 
     protected override async Task OnInitializedAsync()
     {
+        // 讀取收藏的id
+        var favorites =
+            await PostDbService.GetFavoritesAsync();
+        _collectedIds =
+            favorites.Select(f => f.Id).ToHashSet();
+        
         if (PostStateService.PttPosts.Any())
         {
             return;
@@ -109,6 +115,12 @@
 
     private async Task RefreshPost()
     {
+        // 先停止之前的任務
+        PostStateService.RequestStop();
+        
+        PostStateService.CrawlCts = new();
+        var token = PostStateService.CrawlCts.Token;
+
         PostStateService.IsLoading = true;
 
         try
@@ -122,15 +134,14 @@
             {
                 PostStateService.PttPosts = 
                     await PttScraperService.CatchAllBoardsAsync(
-                        pttSettings.BoardConfigs
+                        pttSettings.BoardConfigs,
+                        token
                 );
             }
-
-            // 讀取收藏的id
-            var favorites =
-                await PostDbService.GetFavoritesAsync();
-            _collectedIds =
-                favorites.Select(f => f.Id).ToHashSet();
+        }
+        catch (OperationCanceledException)
+        {
+            Snackbar.Add("已停止描掃", Severity.Info);
         }
         catch (Exception ex)
         {

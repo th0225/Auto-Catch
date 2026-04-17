@@ -13,6 +13,11 @@ public class PostStateService
 
     public void RequestStop()
     {
-        CrawlCts?.Cancel();
+        if (CrawlCts != null && !CrawlCts.IsCancellationRequested)
+        {
+            CrawlCts.Cancel();
+            CrawlCts.Dispose();
+            CrawlCts = null;
+        }
     }
 }
