@@ -137,11 +137,12 @@
                         pttSettings.BoardConfigs,
                         token
                 );
+
+                if (token.IsCancellationRequested)
+                {
+                    Snackbar.Add("已停止掃描", Severity.Info);
+                }
             }
-        }
-        catch (OperationCanceledException)
-        {
-            Snackbar.Add("已停止描掃", Severity.Info);
         }
         catch (Exception ex)
         {

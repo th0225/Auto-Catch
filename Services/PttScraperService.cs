@@ -132,25 +132,18 @@ public class PttScraperService
         List<PttBoardConfig> configs,
         CancellationToken ct = default)
     {
-        try
+        ct.ThrowIfCancellationRequested();
+
+        var tasks = configs.Select(async config =>
         {
-            ct.ThrowIfCancellationRequested();
+            return await GetPostsFromBoardAsync(
+                config, ct
+            );
+        });
 
-            var tasks = configs.Select(async config =>
-            {
-                return await GetPostsFromBoardAsync(
-                    config, ct
-                );
-            });
+        var results = await Task.WhenAll(tasks);
 
-            var results = await Task.WhenAll(tasks);
-
-            return [.. results.SelectMany(x => x).OrderByDescending(p => p.Date)];
-        }
-        catch (OperationCanceledException)
-        {
-            return [];
-        }
+        return [.. results.SelectMany(x => x).OrderByDescending(p => p.Date)];
     }
 
     private DateTime ParsePttDate(string dateStr)
