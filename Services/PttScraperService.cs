@@ -1,5 +1,4 @@
 using AutoCatch.Models;
-using AutoCatch.Service;
 using Microsoft.Playwright;
 
 public class PttScraperService

@@ -26,22 +26,9 @@
 
         @if (_pttSettings.Enabled)
         {
-            <MudPaper Elevation="0"
-                      Class="pa-4 mb-6"
-                      Style="background: rgba(230, 213, 184, 0.1);
-                             border: 1px dashed #E6D5B8;">
-                <MudNumericField
-                    @bind-Value="_pttSettings.RefreshIntervalMinutes" 
-                    Label="抓取間隔 (分鐘)" 
-                    Variant="Variant.Text" 
-                    Min="5" 
-                    HelperText="所有看板將共用此掃描頻率"
-                    Margin="Margin.Dense" />
-            </MudPaper>
-
             <div class="mt-4">
                 @* 看板新增區 (限制最多 3 個) *@
-                <div class="d-flex align-start mb-4">
+                <div class="d-flex align-start mb-6">
                     <MudTextField @bind-Value="_currentBoard"
                                   Label="新增看板 (上限 3 個)" 
                                   Variant="Variant.Outlined" 
@@ -128,16 +115,28 @@
 
 </MudContainer>
 
+<style>
+    .mud-glass {
+        transition: all 0.3s ease;
+    }
+    /* 讓卡片在滑鼠懸停時有輕微浮起感 */
+    .mud-paper:hover {
+        transform: translateY(-2px);
+    }
+</style>
+
 @code {
     private PttSettings _pttSettings = new();
     private string _currentBoard = string.Empty;
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        await base.OnInitializedAsync();
-
-        // 取得設定
-        _pttSettings = await SettingDbService.GetPttSettingsAsync();
+        if (firstRender)
+        {
+            // 取得設定
+            _pttSettings = await SettingDbService.GetPttSettingsAsync();
+            StateHasChanged();
+        }
     }
 
     private void AddBoard()

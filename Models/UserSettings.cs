@@ -9,8 +9,6 @@ public class PttSettings
     
     // 是否啟用
     public bool Enabled{ get; set; } = false;
-    // 更新時間(分)
-    public int RefreshIntervalMinutes { get; set; } = 30;
     // 抓取的看版
     public List<PttBoardConfig> BoardConfigs { get; set; } = [];
 }

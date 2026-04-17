@@ -96,9 +96,8 @@
                 await PostDbService.GetFavoritesAsync();
             _collectedIds =
                 favorites.Select(f => f.Id).ToHashSet();
+                        StateHasChanged();
 
-            StateHasChanged();
-            
             if (PostStateService.PttPosts.Any())
             {
                 return;
