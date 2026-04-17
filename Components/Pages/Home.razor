@@ -21,6 +21,19 @@
                      Class="mud-text-primary mr-3">
                 PTT 最新情報
             </MudText>
+            @if (PostStateService.IsLoading)
+            {
+                @* 停止按鈕 *@
+                <MudButton Variant="Variant.Filled" 
+                        Color="Color.Error" 
+                        Size="Size.Small"
+                        OnClick="StopCrawl"
+                        StartIcon="@Icons.Material.Filled.Stop"
+                        Class="mr-2">
+                    停止
+                </MudButton>
+            }
+
             @if (PostStateService.LastPttUpdateTime.HasValue)
             {
                 <MudText
@@ -64,6 +77,11 @@
             }
         </MudGrid>
     }
+
+    <MudScrollToTop Class="mb-16">
+        <MudFab Color="Color.Primary"
+                StartIcon="@Icons.Material.Filled.ArrowUpward" />
+    </MudScrollToTop>
 </MudContainer>
 
 @code {
@@ -123,6 +141,11 @@
             PostStateService.IsLoading = false;
             await InvokeAsync(StateHasChanged);
         }
+    }
+
+    private void StopCrawl()
+    {
+        PostStateService.RequestStop();
     }
 
     private async Task SaveToIndexedDb(SocialPost post)

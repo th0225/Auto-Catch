@@ -51,7 +51,8 @@ public class AppDbContext : DbContext
                         Name = "Lifeismoney",
                         NumPost = 10,
                         MinNrec = 0,
-                        HideReplies = true
+                        HideReplies = true,
+                        HideGiveMoney = true
                     }
                 ]
             }

@@ -24,7 +24,9 @@ public class PttBoardConfig
     // 推文數
     public int MinNrec { get; set; } = 0;
     // 是否隱藏回文
-    public bool HideReplies { get; set; } = false;
+    public bool HideReplies { get; set; } = true;
+    // 是否隱藏發錢文
+    public bool HideGiveMoney { get; set; } = true;
 }
 
 public class ThreadsSettings

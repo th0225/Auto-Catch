@@ -1,10 +1,11 @@
 using AutoCatch.Models;
+using AutoCatch.Service;
 using Microsoft.Playwright;
 
 public class PttScraperService
 {
     public async Task<List<SocialPost>> GetPostsFromBoardAsync(
-        string board, int targetCount, int minPush, bool hideReplies)
+        PttBoardConfig config, CancellationToken ct)
     {
         using var playwright = await Playwright.CreateAsync();
         await using var browser = await playwright.Chromium.LaunchAsync(
@@ -13,7 +14,7 @@ public class PttScraperService
         var page = await browser.NewPageAsync();
 
         List<SocialPost> allPosts = [];
-        await page.GotoAsync($"https://www.ptt.cc/bbs/{board}/index.html");
+        await page.GotoAsync($"https://www.ptt.cc/bbs/{config.Name}/index.html");
 
         // 處理18歲驗證
         var over18Btn = await page.QuerySelectorAsync("button[name='yes']");
@@ -22,8 +23,13 @@ public class PttScraperService
             await over18Btn.ClickAsync();
         }
 
-        while (allPosts.Count < targetCount)
+        while (allPosts.Count < config.NumPost)
         {
+            if (ct.IsCancellationRequested)
+            {
+                break;
+            }
+
             // 等待文章列表載入
             await page.WaitForSelectorAsync(".r-ent");
 
@@ -32,13 +38,19 @@ public class PttScraperService
 
             foreach (var node in postNodes)
             {
+                // 提前取消
+                if (ct.IsCancellationRequested)
+                {
+                    return allPosts;
+                }
+
                 var nrecElement = await node.QuerySelectorAsync(".nrec");
                 var nrecText = nrecElement != null ?
                     await nrecElement.InnerTextAsync() : "";
                 int pushCount = ParsePushCount(nrecText);
 
                 // 略過最小推文數
-                if (pushCount < minPush)
+                if (pushCount < config.MinNrec)
                 {
                     continue;
                 }
@@ -57,8 +69,15 @@ public class PttScraperService
                     continue;
                 }
 
+                // 略過發錢文
+                if (config.HideGiveMoney &&
+                    (title.Contains("發錢") || title.Contains("P幣")))
+                {
+                    continue;
+                }
+
                 // 略過回文
-                if (hideReplies &&
+                if (config.HideReplies &&
                     title.StartsWith("Re:", StringComparison.OrdinalIgnoreCase))
                 {
                     continue;
@@ -79,17 +98,18 @@ public class PttScraperService
                     Author = author,
                     Date = ParsePttDate(dateStr),
                     Platform = "PTT",
-                    Tags = [board]
+                    Tags = [config.Name]
                 });
 
-                if (allPosts.Count >= targetCount)
+                if (allPosts.Count >= config.NumPost)
                 {
                     break;
                 }
             }
 
             // 數量不夠時，點擊上一頁往回追溯
-            if (allPosts.Count < targetCount)
+            if (allPosts.Count < config.NumPost &&
+                !ct.IsCancellationRequested)
             {
                 var prevPageBtn = page.GetByText("‹ 上頁").First;
                 if (prevPageBtn != null)
@@ -109,21 +129,28 @@ public class PttScraperService
     }
 
     public async Task<List<SocialPost>> CatchAllBoardsAsync(
-        List<PttBoardConfig> configs)
+        List<PttBoardConfig> configs,
+        CancellationToken ct = default)
     {
-        var tasks = configs.Select(async config =>
+        try
         {
-            return await GetPostsFromBoardAsync(
-                config.Name,
-                config.NumPost,
-                config.MinNrec,
-                config.HideReplies
-            );
-        });
+            ct.ThrowIfCancellationRequested();
 
-        var results = await Task.WhenAll(tasks);
+            var tasks = configs.Select(async config =>
+            {
+                return await GetPostsFromBoardAsync(
+                    config, ct
+                );
+            });
 
-        return [.. results.SelectMany(x => x).OrderByDescending(p => p.Date)];
+            var results = await Task.WhenAll(tasks);
+
+            return [.. results.SelectMany(x => x).OrderByDescending(p => p.Date)];
+        }
+        catch (OperationCanceledException)
+        {
+            return [];
+        }
     }
 
     private DateTime ParsePttDate(string dateStr)
@@ -137,10 +164,12 @@ public class PttScraperService
 
     private int ParsePushCount(string nrecText)
     {
-        if (string.IsNullOrEmpty(nrecText))
+        if (string.IsNullOrWhiteSpace(nrecText))
         {
             return 0;
         }
+
+        var text = nrecText.Trim();
 
         if (nrecText == "爆")
         {
@@ -149,7 +178,7 @@ public class PttScraperService
 
         if (nrecText.StartsWith("X"))
         {
-            return -10;
+            return -1;
         }
 
         if (int.TryParse(nrecText, out int count))

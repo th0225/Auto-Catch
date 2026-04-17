@@ -98,7 +98,13 @@
                                     <MudCheckBox
                                         @bind-Value="config.HideReplies" 
                                         Label="過濾 Re:" 
-                                        Color="Color.Secondary" 
+                                        Color="Color.Primary" 
+                                        Dense="true"
+                                        Size="Size.Small" />
+                                    <MudCheckBox
+                                        @bind-Value="config.HideGiveMoney" 
+                                        Label="過濾 發錢" 
+                                        Color="Color.Primary" 
                                         Dense="true"
                                         Size="Size.Small" />
                                 </MudItem>
