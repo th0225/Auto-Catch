@@ -72,7 +72,7 @@
                 <MudItem xs="12">
                     <PostCard Post="post"
                               IsFavorite="IsCollected(post.Id)"
-                              OnFavoriteChanged="SaveToIndexedDb" />
+                              OnFavoriteChanged="SaveFavorite" />
                 </MudItem>
             }
         </MudGrid>
@@ -87,25 +87,30 @@
 @code {
     private HashSet<string> _collectedIds = [];
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        // 讀取收藏的id
-        var favorites =
-            await PostDbService.GetFavoritesAsync();
-        _collectedIds =
-            favorites.Select(f => f.Id).ToHashSet();
-        
-        if (PostStateService.PttPosts.Any())
+        if (firstRender)
         {
-            return;
-        }
+            // 讀取收藏的id
+            var favorites =
+                await PostDbService.GetFavoritesAsync();
+            _collectedIds =
+                favorites.Select(f => f.Id).ToHashSet();
 
-        if (PostStateService.IsLoading)
-        {
-            return;
-        }
+            StateHasChanged();
+            
+            if (PostStateService.PttPosts.Any())
+            {
+                return;
+            }
 
-        await RefreshPost();
+            if (PostStateService.IsLoading)
+            {
+                return;
+            }
+
+            await RefreshPost();
+        }
     }
 
     private async Task ManualRefresh()
@@ -127,8 +132,6 @@
         {
             var pttSettings =
                 await SettingDbService.GetPttSettingsAsync();
-            var threadsSettings = 
-                await SettingDbService.GetThreadsSettingsAsync();
 
             if (pttSettings.Enabled)
             {
@@ -137,11 +140,6 @@
                         pttSettings.BoardConfigs,
                         token
                 );
-
-                if (token.IsCancellationRequested)
-                {
-                    Snackbar.Add("已停止掃描", Severity.Info);
-                }
             }
         }
         catch (Exception ex)
@@ -160,7 +158,7 @@
         PostStateService.RequestStop();
     }
 
-    private async Task SaveToIndexedDb(SocialPost post)
+    private async Task SaveFavorite(SocialPost post)
     {
         bool isAdding = !_collectedIds.Contains(post.Id);
         if (isAdding)
@@ -177,7 +175,7 @@
         {
             if (isAdding)
             {
-                await PostDbService.UpsertFavoriteAsync(post);
+                await PostDbService.SaveFavoriteAsync(post);
             }
             else
             {

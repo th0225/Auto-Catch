@@ -5,7 +5,7 @@ namespace AutoCatch.Models;
 public class SocialPost
 {
     [Key]
-    public string Id { get; set; } = Guid.NewGuid().ToString();
+    public string Id { get; set; } = string.Empty;
     // 社群平台
     public string Platform { get; set; } = "Threads";
     // 作者

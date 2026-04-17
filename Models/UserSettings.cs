@@ -28,21 +28,3 @@ public class PttBoardConfig
     // 是否隱藏發錢文
     public bool HideGiveMoney { get; set; } = true;
 }
-
-public class ThreadsSettings
-{
-    [Key]
-    public int Id { get; set; } = 0;
-
-    // 是否啟狦
-    public bool Enabled { get; set; } = false;
-    // 抓取的關鍵字
-    public List<string> Keywords { get; set; } = [];
-    // 總共抓取的文章數量
-    public int NumPost {get; set; } = 10;
-    // 愛心數
-    public int MinLikes { get; set; } = 0;
-
-    // 更新時間(分)
-    public int RefreshIntervalMinutes { get; set; } = 30;
-}

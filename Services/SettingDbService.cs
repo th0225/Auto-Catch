@@ -1,79 +1,38 @@
-using AutoCatch.Data;
 using AutoCatch.Models;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.JSInterop;
+using System.Text.Json;
 
 namespace AutoCatch.Service;
 
 public class SettingDbService
 {
-    private readonly IDbContextFactory<AppDbContext> _dbFactory;
-
-    public SettingDbService(IDbContextFactory<AppDbContext> dbFactory)
+    private readonly IJSRuntime _js;
+    public SettingDbService(IJSRuntime js)
     {
-        _dbFactory = dbFactory;
+        _js = js;
     }
 
     public async Task<PttSettings> GetPttSettingsAsync()
     {
-        using var db = _dbFactory.CreateDbContext();
-        var settings = await db.PttSettings.FirstOrDefaultAsync();
+        var json = await _js.InvokeAsync<string>(
+            "localStorage.getItem", "ptt_settings"
+        );
 
-        if (settings == null)
+        if (string.IsNullOrEmpty(json))
         {
-            return new PttSettings
-            {
-                Enabled = true,
-                RefreshIntervalMinutes = 30,
-                BoardConfigs =
-                [
-                    new PttBoardConfig
-                    {
-                        Name = "Lifeismoney",
-                        NumPost = 10,
-                        MinNrec = 0,
-                        HideReplies = true
-                    }
-                ]
-            };
+            return new PttSettings();
         }
         else
         {
-            return settings;
+            return JsonSerializer.Deserialize<PttSettings>(json)!;
         }
     }
 
-    public async Task UpdatePttSettingsAsync(PttSettings settings) =>
-        await UpdateSettingsAsync(settings);
-
-    public async Task<ThreadsSettings> GetThreadsSettingsAsync()
+    public async Task SavePttSettingsAsync(PttSettings pttSettings)
     {
-        using var db = _dbFactory.CreateDbContext();
-        var settings = await db.ThreadsSettings.FirstOrDefaultAsync();
-
-        if (settings == null)
-        {
-            return new ThreadsSettings
-            {
-                Enabled = true,
-                Keywords = ["AI"],
-                NumPost = 10,
-                MinLikes = 0,
-                RefreshIntervalMinutes = 30
-            };
-        }
-        else
-        {
-            return settings;
-        }
-    }
-
-    public async Task UpdateThreadsSettingsAsync(ThreadsSettings settings) =>
-        await UpdateSettingsAsync(settings);
-
-    private async Task UpdateSettingsAsync<T>(T settings) where T : class
-    {
-        using var db = _dbFactory.CreateDbContext();
-        db.Set<T>().Update(settings);
-        await db.SaveChangesAsync();
+        var json = JsonSerializer.Serialize(pttSettings);
+        await _js.InvokeVoidAsync(
+            "localStorage.setItem", "ptt_settings", json
+        );
     }
 }

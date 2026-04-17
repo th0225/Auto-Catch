@@ -1,7 +1,5 @@
 using AutoCatch.Components;
-using AutoCatch.Data;
 using AutoCatch.Service;
-using Microsoft.EntityFrameworkCore;
 using MudBlazor.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -13,13 +11,6 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 // MudBlazor
 builder.Services.AddMudServices();
-
-// 讀取資料庫連線字串
-var connectionString =
-    builder.Configuration.GetConnectionString("DefaultConnection");
-// Sqlite
-builder.Services.AddDbContextFactory<AppDbContext>(options =>
-    options.UseSqlite(connectionString));
 
 builder.Services.AddScoped<PostDbService>();
 builder.Services.AddScoped<SettingDbService>();

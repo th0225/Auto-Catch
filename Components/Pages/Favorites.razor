@@ -57,20 +57,26 @@
 @code {
     private List<SocialPost>? _favorites;
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        await LoadFavorites();
+        if (firstRender)
+        {
+            await LoadFavorites();
+        }
     }
 
     private async Task LoadFavorites()
     {
         _favorites = await PostDbService.GetFavoritesAsync();
+        StateHasChanged();
     }
 
     private async Task HandleRemoveFavorite(SocialPost post)
     {
+        _favorites?.RemoveAll(x => x.Id == post.Id);
+        StateHasChanged();
+
         await PostDbService.RemoveFavoriteAsync(post.Id);
         Snackbar.Add("已從收藏清單移除", Severity.Info);
-        await LoadFavorites();
     }
 }

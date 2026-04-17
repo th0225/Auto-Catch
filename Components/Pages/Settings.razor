@@ -130,7 +130,6 @@
 
 @code {
     private PttSettings _pttSettings = new();
-    private ThreadsSettings _threadsSettings = new();
     private string _currentBoard = string.Empty;
 
     protected override async Task OnInitializedAsync()
@@ -139,8 +138,6 @@
 
         // 取得設定
         _pttSettings = await SettingDbService.GetPttSettingsAsync();
-        _threadsSettings = 
-            await SettingDbService.GetThreadsSettingsAsync();
     }
 
     private void AddBoard()
@@ -175,13 +172,11 @@
         if (e.Key == "Enter") AddBoard();
     }
 
-    private void RemoveBoard(string board){}
-
     private async Task SavePttSettingsAsync()
     {
         try
         {
-            await SettingDbService.UpdatePttSettingsAsync(_pttSettings);
+            await SettingDbService.SavePttSettingsAsync(_pttSettings);
             Snackbar.Add("設定已儲存", Severity.Success);
         }
         catch (Exception ex)

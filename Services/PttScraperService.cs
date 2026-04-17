@@ -93,6 +93,7 @@ public class PttScraperService
 
                 allPosts.Add(new SocialPost
                 {
+                    Id = url.Split("/").Last().Replace(".html", ""),
                     Content = title,
                     Url = "https://www.ptt.cc" + url,
                     Author = author,

@@ -1,52 +1,72 @@
-using AutoCatch.Data;
+using System.Text.Json;
 using AutoCatch.Models;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.JSInterop;
 
 namespace AutoCatch.Service;
 
 public class PostDbService
 {
-    private readonly IDbContextFactory<AppDbContext> _dbFactory;
+    private readonly IJSRuntime _js;
+    private const string StorageKey = "favorites";
 
-    public PostDbService(IDbContextFactory<AppDbContext> dbFactory)
+    public PostDbService(IJSRuntime js)
     {
-        _dbFactory = dbFactory;
+        _js = js;
     }
 
     public async Task<List<SocialPost>> GetFavoritesAsync()
     {
-        using var db = _dbFactory.CreateDbContext();
-        return await db.Favorites.ToListAsync();
+        try
+        {
+            var json = await _js.InvokeAsync<string>(
+                "localStorage.getItem", StorageKey);
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                 return [];
+            }
+
+            return JsonSerializer.Deserialize<List<SocialPost>>(
+                json, new JsonSerializerOptions 
+            { 
+                PropertyNameCaseInsensitive = true 
+            }) ?? [];
+        }
+        catch
+        {
+            return [];
+        }
     }
 
-    public async Task UpsertFavoriteAsync(SocialPost favorite)
+    public async Task SaveFavoriteAsync(SocialPost post)
     {
-        using var db = _dbFactory.CreateDbContext();
+        var favorites = await GetFavoritesAsync();
 
-        var isExist = await db.Favorites.FirstOrDefaultAsync(
-            f => f.Id == favorite.Id);
-        if (isExist == null)
-        {
-            db.Favorites.Add(favorite);
-        }
-        else
-        {
-            isExist = favorite;
-            db.Favorites.Update(isExist);
-        }
+        if (favorites.Any(p => p.Id == post.Id)) return;
 
-        await db.SaveChangesAsync();
+        favorites.Add(post);
+        
+        var json = JsonSerializer.Serialize(favorites);
+        await _js.InvokeVoidAsync("localStorage.setItem", StorageKey, json);
     }
 
     public async Task RemoveFavoriteAsync(string id)
     {
-        using var db = _dbFactory.CreateDbContext();
-
-        var favorite = await db.Favorites.FindAsync(id);
-        if (favorite != null)
+        var favorites = await GetFavoritesAsync();
+        
+        if (favorites.Any())
         {
-            db.Favorites.Remove(favorite);
-            await db.SaveChangesAsync();
+            var updated = favorites.Where(p => p.Id != id).ToList();
+            
+            if (updated.Count != favorites.Count)
+            {
+                await _js.InvokeVoidAsync(
+                    "localStorage.setItem", StorageKey, updated);
+            }
         }
+    }
+
+    public async Task ClearAllFavoritesAsync()
+    {
+        await _js.InvokeVoidAsync("localStorage.removeItem", StorageKey);
     }
 }
