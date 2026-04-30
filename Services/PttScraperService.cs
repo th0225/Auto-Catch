@@ -8,123 +8,129 @@ public class PttScraperService
     {
         using var playwright = await Playwright.CreateAsync();
         await using var browser = await playwright.Chromium.LaunchAsync(
-            new() { Headless = true}
+            new() { Headless = true }
         );
         var page = await browser.NewPageAsync();
 
         List<SocialPost> allPosts = [];
-        await page.GotoAsync($"https://www.ptt.cc/bbs/{config.Name}/index.html");
 
-        // 處理18歲驗證
-        var over18Btn = await page.QuerySelectorAsync("button[name='yes']");
-        if (over18Btn != null)
+        try
         {
-            await over18Btn.ClickAsync();
-        }
+            await page.GotoAsync($"https://www.ptt.cc/bbs/{config.Name}/index.html");
 
-        while (allPosts.Count < config.NumPost)
-        {
-            if (ct.IsCancellationRequested)
+            // 處理18歲驗證
+            var over18Btn = await page.QuerySelectorAsync("button[name='yes']");
+            if (over18Btn != null)
             {
-                break;
+                await over18Btn.ClickAsync();
             }
 
-            // 等待文章列表載入
-            await page.WaitForSelectorAsync(".r-ent");
-
-            // 抓取當前頁面的所有文章節點
-            var postNodes = await page.QuerySelectorAllAsync(".r-ent");
-
-            foreach (var node in postNodes)
+            while (allPosts.Count < config.NumPost)
             {
-                // 提前取消
                 if (ct.IsCancellationRequested)
                 {
-                    return allPosts;
-                }
-
-                var nrecElement = await node.QuerySelectorAsync(".nrec");
-                var nrecText = nrecElement != null ?
-                    await nrecElement.InnerTextAsync() : "";
-                int pushCount = ParsePushCount(nrecText);
-
-                // 略過最小推文數
-                if (pushCount < config.MinNrec)
-                {
-                    continue;
-                }
-
-                // 略過無標題文章
-                var titleElement = await node.QuerySelectorAsync(".title a");
-                if (titleElement == null)
-                {
-                    continue;
-                }
-
-                // 略過公告、置底
-                var title = await titleElement.InnerTextAsync();
-                if (title.Contains("[公告]") || title.Contains("[置底]"))
-                {
-                    continue;
-                }
-
-                // 略過發錢文
-                if (config.HideGiveMoney &&
-                    (title.Contains("發錢") || title.Contains("P幣")))
-                {
-                    continue;
-                }
-
-                // 略過回文
-                if (config.HideReplies &&
-                    title.StartsWith("Re:", StringComparison.OrdinalIgnoreCase))
-                {
-                    continue;
-                }
-
-                var url = await titleElement.GetAttributeAsync("href");
-                var author = await (
-                    await node.QuerySelectorAsync(".author")
-                ).InnerTextAsync();
-                var dateStr = await (
-                    await node.QuerySelectorAsync(".date")
-                ).InnerTextAsync();
-
-                allPosts.Add(new SocialPost
-                {
-                    Id = url.Split("/").Last().Replace(".html", ""),
-                    Content = title,
-                    Url = "https://www.ptt.cc" + url,
-                    Author = author,
-                    Date = ParsePttDate(dateStr),
-                    Platform = "PTT",
-                    Tags = [config.Name]
-                });
-
-                if (allPosts.Count >= config.NumPost)
-                {
                     break;
                 }
-            }
 
-            // 數量不夠時，點擊上一頁往回追溯
-            if (allPosts.Count < config.NumPost &&
-                !ct.IsCancellationRequested)
-            {
-                var prevPageBtn = page.GetByText("‹ 上頁").First;
-                if (prevPageBtn != null)
+                // 等待文章列表載入
+                await page.WaitForSelectorAsync(".r-ent");
+
+                // 抓取當前頁面的所有文章節點
+                var postNodes = await page.QuerySelectorAllAsync(".r-ent");
+
+                foreach (var node in postNodes)
                 {
-                    await prevPageBtn.ClickAsync();
-                    await page.WaitForTimeoutAsync(1000);
+                    if (ct.IsCancellationRequested)
+                    {
+                        return allPosts;
+                    }
+
+                    var nrecElement = await node.QuerySelectorAsync(".nrec");
+                    var nrecText = nrecElement != null ?
+                        await nrecElement.InnerTextAsync() : "";
+                    int pushCount = ParsePushCount(nrecText);
+
+                    if (pushCount < config.MinNrec)
+                    {
+                        continue;
+                    }
+
+                    var titleElement = await node.QuerySelectorAsync(".title a");
+                    if (titleElement == null)
+                    {
+                        continue;
+                    }
+
+                    var title = await titleElement.InnerTextAsync();
+                    if (title.Contains("[公告]") || title.Contains("[置底]"))
+                    {
+                        continue;
+                    }
+
+                    if (config.HideGiveMoney &&
+                        (title.Contains("發錢") || title.Contains("P幣")))
+                    {
+                        continue;
+                    }
+
+                    if (config.HideReplies &&
+                        title.StartsWith("Re:", StringComparison.OrdinalIgnoreCase))
+                    {
+                        continue;
+                    }
+
+                    var url = await titleElement.GetAttributeAsync("href");
+                    if (url == null)
+                    {
+                        continue;
+                    }
+
+                    var authorElement = await node.QuerySelectorAsync(".author");
+                    var author = authorElement != null ?
+                        await authorElement.InnerTextAsync() : "未知";
+
+                    var dateElement = await node.QuerySelectorAsync(".date");
+                    var dateStr = dateElement != null ?
+                        await dateElement.InnerTextAsync() : "";
+
+                    allPosts.Add(new SocialPost
+                    {
+                        Id = url.Split("/").Last().Replace(".html", ""),
+                        Content = title,
+                        Url = "https://www.ptt.cc" + url,
+                        Author = author,
+                        Date = ParsePttDate(dateStr),
+                        Platform = "PTT",
+                        Tags = [config.Name]
+                    });
+
+                    if (allPosts.Count >= config.NumPost)
+                    {
+                        break;
+                    }
                 }
-                else
+
+                if (allPosts.Count < config.NumPost &&
+                    !ct.IsCancellationRequested)
                 {
-                    break;
+                    var prevPageBtn = page.GetByText("‹ 上頁").First;
+                    if (prevPageBtn != null)
+                    {
+                        await prevPageBtn.ClickAsync();
+                        await page.WaitForTimeoutAsync(1000);
+                    }
+                    else
+                    {
+                        break;
+                    }
                 }
             }
         }
+        catch
+        {
+            // 異常時仍回傳已抓取的文章
+        }
 
-        await browser.CloseAsync();
         return allPosts;
     }
 
@@ -134,7 +140,7 @@ public class PttScraperService
     {
         ct.ThrowIfCancellationRequested();
 
-        var tasks = configs.Select(async config =>
+        var tasks = configs.Where(c => c.Enabled).Select(async config =>
         {
             return await GetPostsFromBoardAsync(
                 config, ct
@@ -149,7 +155,16 @@ public class PttScraperService
     private DateTime ParsePttDate(string dateStr)
     {
         try {
-            return DateTime.Parse($"{DateTime.Now.Year}/{dateStr.Trim()}");
+            var now = DateTime.Now;
+            var parsed = DateTime.Parse($"{now.Year}/{dateStr.Trim()}");
+
+            // 跨年修正：若解析出的日期比現在晚超過一個月，視為去年
+            if (parsed > now.AddMonths(1))
+            {
+                parsed = parsed.AddYears(-1);
+            }
+
+            return parsed;
         } catch {
             return DateTime.Now;
         }

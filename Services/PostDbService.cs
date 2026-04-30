@@ -59,8 +59,9 @@ public class PostDbService
             
             if (updated.Count != favorites.Count)
             {
+                var json = JsonSerializer.Serialize(updated);
                 await _js.InvokeVoidAsync(
-                    "localStorage.setItem", StorageKey, updated);
+                    "localStorage.setItem", StorageKey, json);
             }
         }
     }

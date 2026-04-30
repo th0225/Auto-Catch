@@ -27,18 +27,18 @@
         @if (_pttSettings.Enabled)
         {
             <div class="mt-4">
-                @* 看板新增區 (限制最多 3 個) *@
+                @* 看板新增區 (限制最多 3 個啟用的看板) *@
                 <div class="d-flex align-start mb-6">
                     <MudTextField @bind-Value="_currentBoard"
                                   Label="新增看板 (上限 3 個)" 
                                   Variant="Variant.Outlined" 
                                   Margin="Margin.Dense"
-                                  Disabled="@(_pttSettings.BoardConfigs.Count >= 3)"
+                                  Disabled="@(_pttSettings.BoardConfigs.Count(c => c.Enabled) >= 3)"
                                   Placeholder="例如: Lifeismoney"
                                   OnKeyDown="@HandleKeyDown" />
                     <MudIconButton Icon="@Icons.Material.Filled.Add"
                                    OnClick="AddBoard"
-                                   Disabled="@(_pttSettings.BoardConfigs.Count >= 3 || string.IsNullOrEmpty(_currentBoard))"
+                                   Disabled="@(_pttSettings.BoardConfigs.Count(c => c.Enabled) >= 3 || string.IsNullOrEmpty(_currentBoard))"
                                    Color="Color.Primary" 
                                    Class="ml-2 mt-1" />
                 </div>
@@ -48,17 +48,20 @@
                     @foreach (var config in _pttSettings.BoardConfigs)
                     {
                         <MudPaper Class="pa-4 mud-glass"
-                                  Style="background: rgba(0,0,0,0.03);
-                                         border-radius: 12px;">
+                                  Style="@GetBoardStyle(config)">
                             <div class="d-flex justify-space-between align-center mb-2">
                                 <MudText Typo="Typo.subtitle1"
                                          Style="font-weight: 900; color: var(--mud-palette-primary);">
                                     @config.Name
                                 </MudText>
+                                <MudSwitch @bind-Value="config.Enabled"
+                                           Color="Color.Primary"
+                                           Size="Size.Small"
+                                           Label="@(config.Enabled ? "啟用" : "停用")" />
                                 <MudIconButton Icon="@Icons.Material.Filled.Delete" 
                                                Size="Size.Small" 
                                                Color="Color.Error" 
-                                               OnClick="@(() => _pttSettings.BoardConfigs.Remove(config))" />
+                                               OnClick="@(() => RemoveBoard(config.Name))" />
                             </div>
 
                             <MudGrid Spacing="2">
@@ -70,7 +73,8 @@
                                         Min="1"
                                         Max="100"
                                         Margin="Margin.Dense"
-                                        HideSpinButtons="true" />
+                                        HideSpinButtons="true"
+                                        Disabled="!config.Enabled" />
                                 </MudItem>
                                 <MudItem xs="4">
                                     <MudNumericField
@@ -79,7 +83,8 @@
                                         Variant="Variant.Text"
                                         Min="0"
                                         Margin="Margin.Dense"
-                                        HideSpinButtons="true" />
+                                        HideSpinButtons="true"
+                                        Disabled="!config.Enabled" />
                                 </MudItem>
                                 <MudItem xs="4">
                                     <MudCheckBox
@@ -87,13 +92,15 @@
                                         Label="過濾 Re:" 
                                         Color="Color.Primary" 
                                         Dense="true"
-                                        Size="Size.Small" />
+                                        Size="Size.Small"
+                                        Disabled="!config.Enabled" />
                                     <MudCheckBox
                                         @bind-Value="config.HideGiveMoney" 
                                         Label="過濾 發錢" 
                                         Color="Color.Primary" 
                                         Dense="true"
-                                        Size="Size.Small" />
+                                        Size="Size.Small"
+                                        Disabled="!config.Enabled" />
                                 </MudItem>
                             </MudGrid>
                         </MudPaper>
@@ -119,8 +126,7 @@
     .mud-glass {
         transition: all 0.3s ease;
     }
-    /* 讓卡片在滑鼠懸停時有輕微浮起感 */
-    .mud-paper:hover {
+    .mud-glass:hover {
         transform: translateY(-2px);
     }
 </style>
@@ -141,7 +147,7 @@
 
     private void AddBoard()
     {
-        if (_pttSettings.BoardConfigs.Count >= 3)
+        if (_pttSettings.BoardConfigs.Count(c => c.Enabled) >= 3)
         {
             Snackbar.Add("雷達頻道已滿，最多只能追蹤 3 個看板喔！",
                 Severity.Warning);
@@ -151,6 +157,12 @@
         if (!string.IsNullOrWhiteSpace(_currentBoard))
         {
             var boardName = _currentBoard.Trim();
+            if (!System.Text.RegularExpressions.Regex.IsMatch(boardName, @"^[a-zA-Z0-9_-]+$"))
+            {
+                Snackbar.Add("看板名稱只能使用英文、數字、底線和連字號。", Severity.Warning);
+                return;
+            }
+
             if (_pttSettings.BoardConfigs.Any(
                 x => x.Name.Equals(
                     boardName, StringComparison.OrdinalIgnoreCase)))
@@ -166,9 +178,27 @@
         }
     }
 
+    private void RemoveBoard(string boardName)
+    {
+        var config = _pttSettings.BoardConfigs
+            .FirstOrDefault(x => x.Name == boardName);
+        if (config != null)
+        {
+            _pttSettings.BoardConfigs.Remove(config);
+            StateHasChanged();
+        }
+    }
+
     private void HandleKeyDown(KeyboardEventArgs e)
     {
         if (e.Key == "Enter") AddBoard();
+    }
+
+    private string GetBoardStyle(PttBoardConfig config)
+    {
+        return config.Enabled
+            ? "background: rgba(0,0,0,0.03); border-radius: 12px;"
+            : "background: rgba(0,0,0,0.03); border-radius: 12px; opacity: 0.5;";
     }
 
     private async Task SavePttSettingsAsync()

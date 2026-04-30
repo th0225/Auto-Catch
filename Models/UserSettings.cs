@@ -17,6 +17,8 @@ public class PttBoardConfig
 {
     // 看板名稱
     public string Name { get; set; } = string.Empty;
+    // 是否啟用
+    public bool Enabled { get; set; } = true;
     // 總共抓取的文章數量
     public int NumPost {get; set; } = 10;
     // 推文數
