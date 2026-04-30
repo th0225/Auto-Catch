@@ -1,3 +1,5 @@
+@inject IJSRuntime JS
+
 <MudCard Elevation="2" Class="rounded-lg mb-4">
     <MudCardHeader>
         <CardHeaderAvatar>
@@ -24,7 +26,7 @@
                 Color="@(IsFavorite ? Color.Error : Color.Secondary)"
                 OnClick="@(() => OnFavoriteToggle())" />
             <MudIconButton
-                Icon="@Icons.Material.Filled.Share" 
+                Icon="@Icons.Material.Filled.OpenInNew" 
                 Color="Color.Default" 
                 Href="@Post.Url" 
                 Target="_blank" />
